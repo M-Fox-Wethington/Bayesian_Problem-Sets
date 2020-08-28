@@ -1,0 +1,91 @@
+---
+title: "Problem Set 01"
+author: "Michael Wethington"
+date: "August 28, 2020"
+output: html_document
+---
+
+```{r}
+
+```
+
+**Exercise 1 **
+&nbsp;
+&nbsp;
+
+Given:
+$$ g(X) = \frac{2}{x^3};\ for \ 1 <= X <= \infty $$
+$$ and $$
+$$ h(Y) = \frac{3}{Y^4};\ for\ 1 <= Y <= \infty $$
+What is the joint probability distribution of $(X,Y)$?
+
+Show that: $$ P(X<= Y) = 2/5 $$
+
+
+Answer: 
+
+We begin by finding the Joint probability of the two pdfs. Since each pdf is independent of one another, the joint pdf of $(X,Y)$ is found by multiplying them. Where, $$ f(x,y) = g(X)\cdot h(Y) $$
+
+$$\frac{2}{x^3}\ \cdot \frac{3}{Y^4}\ = \ \frac{6}{x^3 y^4}; \ (1\le x \le \infty, \ 1\le y \le \infty) \\ 0,\  otherwise  $$
+
+We that we have successfully identified the joint pdf, we need to marginalize each respective random variable $(X,Y)$ through the process of integration.
+
+$$ P(X<= Y) = P(1 \le x \le \infty, \ x \le y\le \infty) \\ 
+\int_{1}^{\infty} \int_{x}^{\infty} \ f(x,y) \ dy \ dx \\
+\int_{1}^{\infty} \int_{x}^{\infty} \frac{6}{x^3 y^4}\ dy \ dx \\
+\int_{x}^{\infty} \frac{6}{x^3 y^4}\ dy  \\  
+\frac{6}{x^3 } \int_{x}^{\infty} \frac{1}{y^4}\ dy \\
+\frac{6}{x^3 } \int_{x}^{\infty} y^{ - 4} \ dy \\
+\frac{6}{x^3 } \int_{x}^{\infty} y^{ - 4} \ dy \\
+\frac{6}{x^3 } \cdot \ \frac{y^ {- 3}}{-3} \ = \frac{-2}{x^3 x^3} \\
+\int_{x}^{\infty} \frac{6}{x^3 y^4} = 0 - (- \frac{2}{x^6}) = \ \frac{2}{x^6}\\
+\int_{1}^{\infty} \frac{2}{x^6}dx = - \frac{2}{5x^5}\\
+\int_{1}^{\infty} \frac{2}{x^6}dx = 0 - (- \frac{2}{5}) \ = \frac{2}{5}
+$$
+
+**Exercise 2 **
+&nbsp;
+&nbsp;
+
+In each case, find the (1) joint distribution $ P(X,Y)$, the two marginal distributions $P(X)$ and $P(Y)$ (2 and 3), and (4) determine if X and Y are independent.
+
+Case 1: (X,Y) are uniformly distributed on the square
+
+$$ -6 \le X \le 6 \\ -6 \le Y \le 6 $$
+
+Case 2: (X,Y) are uniformly distributed on the triangle
+
+$$ Y \le X \le 6 \\ -6 \le Y \le X $$
+
+Answer: 
+
+The vertices of the triangle are $(-6,-6), (6,-6),$ and $(6,6)$. The area of the triangle being $\frac{1}{2}\cdot base\cdot height = \frac{1}{2}\cdot 12 \cdot 12 = 72$ \\
+
+Given area of triangle = 72, our joint pdf is: 
+
+$$f(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$$
+
+
+
+Case 2: (X,Y) are uniformly distributed on the circle
+
+$$ X^2 + Y^2 \le 36 $$
+
+
+Write a function for each of the three joint distributions: 
+
+Exercise 1: 
+```{r}
+library(ggplot2)
+library(ggExtra)
+
+##Exercise 1
+df1 <- data.frame(x = runif(1000, min = -6, max = 6), y = runif(1000, -6, 6))
+p1 <- ggplot(df1, aes(x, y)) + geom_point() + theme_bw()
+ggMarginal(p1, type = "histogram")
+
+```
+
+Exercise 2: 
+
+
