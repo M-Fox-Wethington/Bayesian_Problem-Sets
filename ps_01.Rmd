@@ -19,7 +19,7 @@ $$ and $$
 $$ h(Y) = \frac{3}{Y^4};\ for\ 1 <= Y <= \infty $$
 What is the joint probability distribution of $(X,Y)$?
 
-Show that: $$ P(X<= Y) = 2/5 $$
+Show that: $$ P(X<= Y) = \frac{2}{5} $$
 
 
 Answer: 
@@ -53,6 +53,27 @@ Case 1: (X,Y) are uniformly distributed on the square
 
 $$ -6 \le X \le 6 \\ -6 \le Y \le 6 $$
 
+Answer: 
+
+The Join pdf of X,Y is 
+
+$$f_{X,Y}(x,y) = \frac{1}{12^2}; \ -6 \le x, y \le 6 \\  $$
+
+Marginal pdf of X:
+
+$$f_{X}(x) =  \int_{-6}^{6} \frac{1}{144}dy  \\
+\int_{-6}^{6} \frac{1}{144}dy = \frac{1}{12}; \ -6 \le x \le 6\\$$
+
+Marginal pdf of Y:
+
+
+$$f_{Y}(y) =  \int_{-6}^{6} \frac{1}{144}dx  \\
+\int_{-6}^{6} \frac{1}{144}dx = \frac{1}{12}; \ -6 \le y \le 6\\$$
+
+Independence:
+
+Because the product of the marginal pdfs are equal to the joint pdf, we can assume independence of X and Y.
+
 Case 2: (X,Y) are uniformly distributed on the triangle
 
 $$ Y \le X \le 6 \\ -6 \le Y \le X $$
@@ -63,11 +84,28 @@ The vertices of the triangle are $(-6,-6), (6,-6),$ and $(6,6)$. The area of the
 
 Given area of triangle = 72, our joint pdf is: 
 
-$$f(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$$
+
+$$f(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$
+
+$$ \int_{-3}^{y} \int_{x}^{3} \ f(x,y) \ dy \ dx \\
+ f_{X}(x) = \int_{-3}^{y} \int_{x}^{3} \ f(x,y) \ dy \\ 
+  \int_{x}^{3} \ f(x,y) \ dy \\ 
+    \int_{x}^{3} \ \frac{1}{72} \ dy \\
+    lim_{y -> x} + (\frac{1}{72}y) = \frac{1}{72}x \\ 
+    lim_{y -> 3} + (\frac{1}{72}y) = \frac{1}{24} \\ 
+     = \frac{1}{24} - \frac{1}{72}x \\
+    \int_{-3}^{y}(\frac{1}{24} - \frac{1}{72}x )\ dx \\
+    = \ \int_{-3}^{y}\frac{1}{24}\ dx - \int_{-3}^{y}\frac{1}{72}x \ dx \\
+    \ \int_{-3}^{y}\frac{1}{24}\ dx = \frac{1}{24}y - \frac{1}{8} \\
+    \int_{-3}^{y}\frac{1}{72}x dx = \frac{1}{72}y - \frac{x^2}{2} \\$$ 
+    
+    
+    
+ 
 
 
 
-Case 2: (X,Y) are uniformly distributed on the circle
+Case 3: (X,Y) are uniformly distributed on the circle
 
 $$ X^2 + Y^2 \le 36 $$
 
