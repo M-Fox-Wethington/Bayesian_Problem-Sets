@@ -57,7 +57,7 @@ $$ -6 \le X \le 6 \\ -6 \le Y \le 6 $$
 
 Answer: 
 
-The Join pdf of X,Y is 
+The Join pdf of $(X,Y)$ 
 
 $$f_{X,Y}(x,y) = \frac{1}{12^2}; \ -6 \le x,  y \le 6 \\  $$
 
@@ -98,19 +98,28 @@ $$
 
 Marginal pdf of x = 
 
-$$ f_{X}(x) = \int_{x}^{6} \ f(x,y) \ dy \\ 
-    \int_{x}^{6} \ \frac{1}{72} \ dy\ \ \   \text{definite integral } \\ 
-    = \frac{1}{72}|_x^6 \ \ \text{evaluate limits of integration }\\ 
-     \frac{1}{72}|_x^6= \frac{6}{72}- \frac{x}{72} = \frac{6-x}{72} \\ $$ 
+$$ 
+\begin{align}
+f_{X}(x) = \int_{x}^{6} \ f(x,y) \ dy \\ 
+    \int_{x}^{6} \ \frac{1}{72} \ dy && \text{definite integral } \\ 
+    = \frac{1}{72}|_x^6 \ \ && \text{evaluate limits of integration }\\ 
+     \frac{1}{72}|_x^6= \frac{6}{72}- \frac{x}{72} = \frac{6-x}{72} \\ 
+     
+\end{align}$$ 
     
 Marginal pdf of Y:
 
-$$ f_{Y}(y) = \int_{-6}^{y} \ f(x,y) \ dx \\ 
-    \int_{-6}^{y} \ \frac{1}{72} \ dx\ \ \   \text{compute the definite integral } \\ 
-    = \frac{1}{72}|_6^y \ \ \text{evaluate limits of integration }\\ 
-     \frac{1}{72}|_x^-6= \frac{y}{72}- (-\frac{6}{72}) = \frac{6+y}{72} \\ $$ 
+$$
+\begin{align}
+f_{Y}(y) = \int_{-6}^{y} \ f(x,y) \ dx \\ 
+    \int_{-6}^{y} \ \frac{1}{72} \ dx\ \ \  &&  \text{compute the definite integral } \\ 
+    = \frac{1}{72}|_6^y \ \ &&  \text{evaluate limits of integration }\\ 
+     \frac{1}{72}|_x^-6= \frac{y}{72}- (-\frac{6}{72}) \\
+     = \frac{6+y}{72} \\ 
+     \end{align}$$ 
     
- Independence:
+
+Independence:
  Since the joint probability of $ (X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
 
 
@@ -118,13 +127,37 @@ $$ f_{Y}(y) = \int_{-6}^{y} \ f(x,y) \ dx \\
 Case 3: (X,Y) are uniformly distributed on the circle
 
 $$ X^2 + Y^2 \le 36 $$
+Area of the circle: $36 \pi$ 
 
 
 The Joint pdf is
 
 $$
-f_{X,Y}(x,y)
+f_{X,Y}(x,y) = \frac{1}{36 \pi}
 $$
+Marginal pdf of X:
+
+$$
+
+\begin{align}
+f_{X}(x) = \frac{y}{36 \pi}|_\sqrt{36- x^2} ^\sqrt{-36+x^2} && \text{evaluate limits of integration } \\
+ = \frac{1}{18 \pi}\sqrt{36-x^2}
+ \end{align}$$
+
+
+
+Marginal pdf of Y:
+
+$$ \begin{align}
+f_{X}(x) = \frac{x}{36 \pi}|_\sqrt{36- y^2} ^\sqrt{-36+y^2} && \text{evaluate limits of integration } \\
+ = \frac{1}{18 \pi}\sqrt{36-y^2}
+ \end{align}$$
+
+Independence: 
+
+Because the values of random variables $X$ and $Y$ directly influence done another, and because the product of $X$ and $Y$ does not equal their joint probability $(X,Y)$, they are not independent.  
+
+
 
 Write a function for each of the three joint distributions: 
 
