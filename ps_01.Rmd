@@ -8,7 +8,10 @@ output:
 ---
 
 ```{r}
+#Load Packages
 
+library(ggplot2)
+library(ggExtra)
 ```
 
 **Exercise 1 **
@@ -174,5 +177,87 @@ ggMarginal(p1, type = "histogram")
 ```
 
 Exercise 2: 
+```{r}
+# #Exercise 2
+# #replicate
 
+runs <- 1000
+
+#set paths for X and Y
+X <-rep(NA, runs)
+Y<- rep(NA, runs)
+
+
+#run the loop
+for(i in 1:runs){
+
+
+  #go until we accept the sample
+  while(TRUE){
+
+    #sample x and y
+    x <- runif(1, -6, 6)
+    y <- runif(1, -6, 6)
+
+    #see if we accept the sample
+    if(y <= x){
+
+      #accept
+      X[i] = x
+      Y[i] = y
+
+      #break, go to the next iteration
+      break
+    }
+  }
+}
+
+data <- data.frame(X, Y)
+p1 <- ggplot(data, aes(X, Y)) + geom_point() + theme_bw()
+ggMarginal(p1, type = "histogram")
+```
+
+
+##Exercise 3
+
+```{r}
+#Exercise #3
+#replicate
+set.seed(110)
+sims <- 1000
+
+#set paths for X and Y
+X <-rep(NA, sims)
+Y<- rep(NA, sims)
+
+
+#run the loop
+for(i in 1:sims){
+
+
+  #go until we accept the sample
+  while(TRUE){
+
+    #sample x and y
+    x <- runif(1, -6, 6)
+    y <- runif(1, -6, 6)
+
+    #see if we accept the sample
+    if(x^2 + y^2 <= 36){
+
+      #accept
+      X[i] = x
+      Y[i] = y
+
+      #break, go to the next iteration
+      break
+    }
+  }
+}
+
+data <- data.frame(X, Y)
+p1 <- ggplot(data, aes(X, Y)) + geom_point() + theme_bw()
+ggMarginal(p1, type = "histogram")
+
+```
 
