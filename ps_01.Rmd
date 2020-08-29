@@ -2,7 +2,9 @@
 title: "Problem Set 01"
 author: "Michael Wethington"
 date: "August 28, 2020"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r}
@@ -57,7 +59,7 @@ Answer:
 
 The Join pdf of X,Y is 
 
-$$f_{X,Y}(x,y) = \frac{1}{12^2}; \ -6 \le x, y \le 6 \\  $$
+$$f_{X,Y}(x,y) = \frac{1}{12^2}; \ -6 \le x,  y \le 6 \\  $$
 
 Marginal pdf of X:
 
@@ -82,26 +84,34 @@ Answer:
 
 The vertices of the triangle are $(-6,-6), (6,-6),$ and $(6,6)$. The area of the triangle being $\frac{1}{2}\cdot base\cdot height = \frac{1}{2}\cdot 12 \cdot 12 = 72$ \\
 
-Given area of triangle = 72, our joint pdf is: 
+Given area of triangle = 72,  
+
+Joint pdf:
+
+$$f_{X,Y}(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$
+Find the double integral:
+
+$$ \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \ dx \\
+ f_{X}(x) = \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \\ 
+$$
 
 
-$$f(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$
+Marginal pdf of x = 
 
-$$ \int_{-3}^{y} \int_{x}^{3} \ f(x,y) \ dy \ dx \\
- f_{X}(x) = \int_{-3}^{y} \int_{x}^{3} \ f(x,y) \ dy \\ 
-  \int_{x}^{3} \ f(x,y) \ dy \\ 
-    \int_{x}^{3} \ \frac{1}{72} \ dy \\
-    lim_{y -> x} + (\frac{1}{72}y) = \frac{1}{72}x \\ 
-    lim_{y -> 3} + (\frac{1}{72}y) = \frac{1}{24} \\ 
-     = \frac{1}{24} - \frac{1}{72}x \\
-    \int_{-3}^{y}(\frac{1}{24} - \frac{1}{72}x )\ dx \\
-    = \ \int_{-3}^{y}\frac{1}{24}\ dx - \int_{-3}^{y}\frac{1}{72}x \ dx \\
-    \ \int_{-3}^{y}\frac{1}{24}\ dx = \frac{1}{24}y - \frac{1}{8} \\
-    \int_{-3}^{y}\frac{1}{72}x dx = \frac{1}{72}y - \frac{x^2}{2} \\$$ 
+$$ f_{X}(x) = \int_{x}^{6} \ f(x,y) \ dy \\ 
+    \int_{x}^{6} \ \frac{1}{72} \ dy\ \ \   \text{definite integral } \\ 
+    = \frac{1}{72}|_x^6 \ \ \text{evaluate limits of integration }\\ 
+     \frac{1}{72}|_x^6= \frac{6}{72}- \frac{x}{72} = \frac{6-x}{72} \\ $$ 
     
+Marginal pdf of Y:
+
+$$ f_{Y}(y) = \int_{-6}^{y} \ f(x,y) \ dx \\ 
+    \int_{-6}^{y} \ \frac{1}{72} \ dx\ \ \   \text{compute the definite integral } \\ 
+    = \frac{1}{72}|_6^y \ \ \text{evaluate limits of integration }\\ 
+     \frac{1}{72}|_x^-6= \frac{y}{72}- (-\frac{6}{72}) = \frac{6+y}{72} \\ $$ 
     
-    
- 
+ Independence:
+ Since the joint probability of $ (X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
 
 
 
@@ -109,6 +119,12 @@ Case 3: (X,Y) are uniformly distributed on the circle
 
 $$ X^2 + Y^2 \le 36 $$
 
+
+The Joint pdf is
+
+$$
+f_{X,Y}(x,y)
+$$
 
 Write a function for each of the three joint distributions: 
 
