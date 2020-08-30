@@ -14,6 +14,8 @@ library(ggplot2)
 library(ggExtra)
 ```
 
+
+
 **Exercise 1 **
 &nbsp;
 &nbsp;
@@ -21,7 +23,7 @@ library(ggExtra)
 Given:
 $$ g(X) = \frac{2}{x^3};\ for \ 1 <= X <= \infty $$
 $$ and $$
-$$ h(Y) = \frac{3}{Y^4};\ for\ 1 <= Y <= \infty $$
+$$ h(Y) = \frac{3}{y^4};\ for\ 1 <= Y <= \infty $$
 What is the joint probability distribution of $(X,Y)$?
 
 Show that: $$ P(X<= Y) = \frac{2}{5} $$
@@ -29,24 +31,27 @@ Show that: $$ P(X<= Y) = \frac{2}{5} $$
 
 Answer: 
 
-We begin by finding the Joint probability of the two pdfs. Since each pdf is independent of one another, the joint pdf of $(X,Y)$ is found by multiplying them. Where, $$ f(x,y) = g(X)\cdot h(Y) $$
+We begin by finding the Joint probability of the two pdfs. Since each pdf is independent of one another, the joint pdf of $(X,Y)$ is found by multiplying them. Where, $$ f(x,y) = g(X)\cdot h(Y)$$
 
-$$\frac{2}{x^3}\ \cdot \frac{3}{Y^4}\ = \ \frac{6}{x^3 y^4}; \ (1\le x \le \infty, \ 1\le y \le \infty) \\ 0,\  otherwise  $$
+$$ f_{X,Y}(x,y)  = \left\{
+\begin{array}{ll}
+\frac{2}{x^3}\ \cdot \frac{3}{y^4}\ = \ \frac{6}{x^3 y^4} & \quad (1\le X \le \infty, \ 1\le Y \le \infty) \\
+0, \ otherwise
+\end{array}
+\right. $$
 
 We that we have successfully identified the joint pdf, we need to marginalize each respective random variable $(X,Y)$ through the process of integration.
 
-$$ P(X<= Y) = P(1 \le x \le \infty, \ x \le y\le \infty) \\ 
+$$ P(X<= Y) = P(1 \le x \le \infty, \ x \le y\le \infty) \\
 \int_{1}^{\infty} \int_{x}^{\infty} \ f(x,y) \ dy \ dx \\
 \int_{1}^{\infty} \int_{x}^{\infty} \frac{6}{x^3 y^4}\ dy \ dx \\
 \int_{x}^{\infty} \frac{6}{x^3 y^4}\ dy  \\  
 \frac{6}{x^3 } \int_{x}^{\infty} \frac{1}{y^4}\ dy \\
-\frac{6}{x^3 } \int_{x}^{\infty} y^{ - 4} \ dy \\
-\frac{6}{x^3 } \int_{x}^{\infty} y^{ - 4} \ dy \\
+\frac{6}{x^3 } \int_{x}^{\infty} y^{ - 4} \ dy  \\
 \frac{6}{x^3 } \cdot \ \frac{y^ {- 3}}{-3} \ = \frac{-2}{x^3 x^3} \\
 \int_{x}^{\infty} \frac{6}{x^3 y^4} = 0 - (- \frac{2}{x^6}) = \ \frac{2}{x^6}\\
 \int_{1}^{\infty} \frac{2}{x^6}dx = - \frac{2}{5x^5}\\
-\int_{1}^{\infty} \frac{2}{x^6}dx = 0 - (- \frac{2}{5}) \ = \frac{2}{5}
-$$
+\int_{1}^{\infty} \frac{2}{x^6}dx = 0 - (- \frac{2}{5}) \ = \frac{2}{5} $$
 
 **Exercise 2 **
 &nbsp;
@@ -60,24 +65,53 @@ $$ -6 \le X \le 6 \\ -6 \le Y \le 6 $$
 
 Answer: 
 
+We are using the uniform distribution and find the area of the square to be 144. 
+
 The Join pdf of $(X,Y)$ 
 
-$$f_{X,Y}(x,y) = \frac{1}{12^2}; \ -6 \le x,  y \le 6 \\  $$
+$$ F(X,Y) = \left\{
+        \begin{array}{ll}
+            \frac{1}{144} & \quad -6 \le x,  y \le 6  \\
+            0, \ otherwise
+        \end{array}
+    \right.$$
 
 Marginal pdf of X:
 
-$$f_{X}(x) =  \int_{-6}^{6} \frac{1}{144}dy  \\
-\int_{-6}^{6} \frac{1}{144}dy = \frac{1}{12}; \ -6 \le x \le 6\\$$
+$$F_{X}(x) =  \int_{-6}^{6} \frac{1}{144}dy  \\
+= \left.\frac{1}{144}y\right|_{-6}^6\\$$
+
+
+$$ F_{X}(x)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{12} & \quad -6 \le x\le 6  \\
+            0, \ otherwise
+        \end{array}
+    \right.$$
+
 
 Marginal pdf of Y:
 
 
-$$f_{Y}(y) =  \int_{-6}^{6} \frac{1}{144}dx  \\
-\int_{-6}^{6} \frac{1}{144}dx = \frac{1}{12}; \ -6 \le y \le 6\\$$
+$$
+F_{Y}(y) =  \int_{-6}^{6} \frac{1}{144}dx  \\
+= \left.\frac{1}{144}x\right|_{-6}^6\\
+$$
+
+
+$$ F_{Y}(y)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{12} & \quad -6 \le y\le 6  \\
+            0, \ otherwise
+        \end{array}
+    \right.$$
 
 Independence:
 
 Because the product of the marginal pdfs are equal to the joint pdf, we can assume independence of X and Y.
+
+
+
 
 Case 2: (X,Y) are uniformly distributed on the triangle
 
@@ -91,39 +125,58 @@ Given area of triangle = 72,
 
 Joint pdf:
 
-$$f_{X,Y}(x,y) = \frac{1}{72}; \ \  Y \le X \le 6, \  -6 \le Y \le X $$
+$$ F_{X}(x)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{72} & \quad  Y \le X \le 6, \  -6 \le Y \le X \\
+            0, \ otherwise
+        \end{array}
+    \right.$$
+    
 Find the double integral:
 
 $$ \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \ dx \\
- f_{X}(x) = \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \\ 
-$$
+ f_{X}(x) = \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \\ $$
 
 
-Marginal pdf of x = 
+Marginal pdf of X is found by integrating out Y:
 
-$$ 
-\begin{align}
-f_{X}(x) = \int_{x}^{6} \ f(x,y) \ dy \\ 
-    \int_{x}^{6} \ \frac{1}{72} \ dy && \text{definite integral } \\ 
-    = \frac{1}{72}|_x^6 \ \ && \text{evaluate limits of integration }\\ 
-     \frac{1}{72}|_x^6= \frac{6}{72}- \frac{x}{72} = \frac{6-x}{72} \\ 
+$$\begin{align}
+F_{X}(x) = \int_{-6}^{x} \ f(x,y) \ dy \\ 
+    \int_{-6}^{x} \ \frac{1}{72} \ dy && \text{definite integral } \\ 
+    = \frac{1}{72}y|_{-6}^x \ \ && \text{evaluate limits of integration }\\ 
+     = \frac{x+6}{72} \\ 
      
 \end{align}$$ 
-    
-Marginal pdf of Y:
 
-$$
-\begin{align}
-f_{Y}(y) = \int_{-6}^{y} \ f(x,y) \ dx \\ 
-    \int_{-6}^{y} \ \frac{1}{72} \ dx\ \ \  &&  \text{compute the definite integral } \\ 
-    = \frac{1}{72}|_6^y \ \ &&  \text{evaluate limits of integration }\\ 
-     \frac{1}{72}|_x^-6= \frac{y}{72}- (-\frac{6}{72}) \\
-     = \frac{6+y}{72} \\ 
-     \end{align}$$ 
+$$ F_{X}(x)  = \left\{
+        \begin{array}{ll}
+            \frac{x+6}{72} & \quad  -6 \le x \le 6\\
+            0, \ otherwise
+        \end{array}
+    \right.$$
+
+
+    
+Marginal pdf of X:
+
+$$\begin{align}
+F_{Y}(y) = \int_{y}^{6} \ f(x,y) \ dx \\ 
+    \int_{y}^{6} \ \frac{1}{72} \ dx && \text{definite integral } \\ 
+    = \frac{1}{72}y|_{x}^6 \ \ && \text{evaluate limits of integration }\\ 
+     = \frac{x+6}{72} \\ 
+     
+\end{align}$$ 
+
+$$ F_{Y}(y)  = \left\{
+        \begin{array}{ll}
+            \frac{y-6}{72} & \quad  -6 \le y \le 6\\
+            0, \ otherwise
+        \end{array}
+    \right.$$
     
 
 Independence:
- Since the joint probability of $ (X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
+ Since the joint probability of $(X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
 
 
 
@@ -135,14 +188,18 @@ Area of the circle: $36 \pi$
 
 The Joint pdf is
 
-$$
-f_{X,Y}(x,y) = \frac{1}{36 \pi}
-$$
+
+$$ F_{X,Y}(x,y)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{36 \pi} & \quad  x^2 + y^2 \le 36\\
+            0, \ otherwise
+        \end{array}
+    \right.$$
+    
+    
 Marginal pdf of X:
 
-$$
-
-\begin{align}
+$$\begin{align}
 f_{X}(x) = \frac{y}{36 \pi}|_\sqrt{36- x^2} ^\sqrt{-36+x^2} && \text{evaluate limits of integration } \\
  = \frac{1}{18 \pi}\sqrt{36-x^2}
  \end{align}$$
