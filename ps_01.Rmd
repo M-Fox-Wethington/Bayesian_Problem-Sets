@@ -59,13 +59,14 @@ $$ P(X<= Y) = P(1 \le x \le \infty, \ x \le y\le \infty) \\
 
 In each case, find the (1) joint distribution $ P(X,Y)$, the two marginal distributions $P(X)$ and $P(Y)$ (2 and 3), and (4) determine if X and Y are independent.
 
-Case 1: (X,Y) are uniformly distributed on the square
+\
+
+**Case 1: (X,Y) are uniformly distributed on the square**
 
 $$ -6 \le X \le 6 \\ -6 \le Y \le 6 $$
 
-Answer: 
 
-We are using the uniform distribution and find the area of the square to be 144. 
+We are using the uniform distribution and find the area of the square to be 144.\\ 
 
 The Join pdf of $(X,Y)$ 
 
@@ -76,10 +77,10 @@ $$ F(X,Y) = \left\{
         \end{array}
     \right.$$
 
-Marginal pdf of X:
+Marginal distribution of X:
 
-$$F_{X}(x) =  \int_{-6}^{6} \frac{1}{144}dy  \\
-= \left.\frac{1}{144}y\right|_{-6}^6\\$$
+$$F_{X}(x) =  \int_{-6}^{6} \frac{1}{144}dy  \\ $$
+$$= \left.\frac{1}{144}y\right|_{-6}^6\\$$
 
 
 $$ F_{X}(x)  = \left\{
@@ -90,13 +91,11 @@ $$ F_{X}(x)  = \left\{
     \right.$$
 
 
-Marginal pdf of Y:
+Marginal distribution of Y:
 
 
-$$
-F_{Y}(y) =  \int_{-6}^{6} \frac{1}{144}dx  \\
-= \left.\frac{1}{144}x\right|_{-6}^6\\
-$$
+$$ F_{Y}(y) =  \int_{-6}^{6} \frac{1}{144}dx  \\$$
+$$= \left.\frac{1}{144}x\right|_{-6}^6\ $$
 
 
 $$ F_{Y}(y)  = \left\{
@@ -108,16 +107,13 @@ $$ F_{Y}(y)  = \left\{
 
 Independence:
 
-Because the product of the marginal pdfs are equal to the joint pdf, we can assume independence of X and Y.
+Since the joint probability of $(X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
 
 
 
-
-Case 2: (X,Y) are uniformly distributed on the triangle
+**Case 2: (X,Y) are uniformly distributed on the triangle**
 
 $$ Y \le X \le 6 \\ -6 \le Y \le X $$
-
-Answer: 
 
 The vertices of the triangle are $(-6,-6), (6,-6),$ and $(6,6)$. The area of the triangle being $\frac{1}{2}\cdot base\cdot height = \frac{1}{2}\cdot 12 \cdot 12 = 72$ \\
 
@@ -134,18 +130,17 @@ $$ F_{X}(x)  = \left\{
     
 Find the double integral:
 
-$$ \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \ dx \\
- f_{X}(x) = \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \\ $$
+$$ \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \ dx \\$$
+$$ f_{X}(x) = \int_{-6}^{y} \int_{x}^{6} \ f(x,y) \ dy \\ $$
 
 
-Marginal pdf of X is found by integrating out Y:
+Marginal distribution of X is found by integrating out Y:
 
 $$\begin{align}
 F_{X}(x) = \int_{-6}^{x} \ f(x,y) \ dy \\ 
     \int_{-6}^{x} \ \frac{1}{72} \ dy && \text{definite integral } \\ 
     = \frac{1}{72}y|_{-6}^x \ \ && \text{evaluate limits of integration }\\ 
      = \frac{x+6}{72} \\ 
-     
 \end{align}$$ 
 
 $$ F_{X}(x)  = \left\{
@@ -157,17 +152,16 @@ $$ F_{X}(x)  = \left\{
 
 
     
-Marginal pdf of X:
+Marginal distribution of X:
 
 $$\begin{align}
 F_{Y}(y) = \int_{y}^{6} \ f(x,y) \ dx \\ 
     \int_{y}^{6} \ \frac{1}{72} \ dx && \text{definite integral } \\ 
     = \frac{1}{72}y|_{x}^6 \ \ && \text{evaluate limits of integration }\\ 
      = \frac{x+6}{72} \\ 
-     
 \end{align}$$ 
 
-$$ F_{Y}(y)  = \left\{
+$$F_{Y}(y)  = \left\{
         \begin{array}{ll}
             \frac{y-6}{72} & \quad  -6 \le y \le 6\\
             0, \ otherwise
@@ -176,18 +170,17 @@ $$ F_{Y}(y)  = \left\{
     
 
 Independence:
- Since the joint probability of $(X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
+Since the joint probability of $(X,Y)$ is not equal to the product of the marginal distributions, X and Y are not independent. \\ 
 
 
 
-Case 3: (X,Y) are uniformly distributed on the circle
+**Case 3: (X,Y) are uniformly distributed on the circle**
 
 $$ X^2 + Y^2 \le 36 $$
 Area of the circle: $36 \pi$ 
 
 
-The Joint pdf is
-
+Joint pdf: 
 
 $$ F_{X,Y}(x,y)  = \left\{
         \begin{array}{ll}
@@ -197,27 +190,40 @@ $$ F_{X,Y}(x,y)  = \left\{
     \right.$$
     
     
-Marginal pdf of X:
+Marginal distribution of X:
 
 $$\begin{align}
 f_{X}(x) = \frac{y}{36 \pi}|_\sqrt{36- x^2} ^\sqrt{-36+x^2} && \text{evaluate limits of integration } \\
  = \frac{1}{18 \pi}\sqrt{36-x^2}
- \end{align}$$
+\end{align}$$
+
+$$F_{X}(x)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{18 \pi}\sqrt{36-x^2} & \quad  -6 \le x \le 6\\
+            0, \ otherwise
+        \end{array}
+    \right.$$
 
 
 
-Marginal pdf of Y:
+Marginal distribution of Y:
 
-$$ \begin{align}
-f_{X}(x) = \frac{x}{36 \pi}|_\sqrt{36- y^2} ^\sqrt{-36+y^2} && \text{evaluate limits of integration } \\
+$$\begin{align}
+f_{Y}(y) = \frac{y}{36 \pi}|_\sqrt{36- y^2} ^\sqrt{-36+y^2} && \text{evaluate limits of integration } \\
  = \frac{1}{18 \pi}\sqrt{36-y^2}
- \end{align}$$
+\end{align}$$
 
+$$F_{X}(x)  = \left\{
+        \begin{array}{ll}
+            \frac{1}{18 \pi}\sqrt{36-y^2} & \quad  -6 \le y \le 6\\
+            0, \ otherwise
+        \end{array}
+    \right.$$
 Independence: 
 
-Because the values of random variables $X$ and $Y$ directly influence done another, and because the product of $X$ and $Y$ does not equal their joint probability $(X,Y)$, they are not independent.  
+Because the product of $P(X=x)$ and $P(Y=y)$ does not equal their joint probability $P(X,Y)$, they are not independent.  
 
-
+**Graphical Representations** 
 
 Write a function for each of the three joint distributions: 
 
@@ -227,51 +233,62 @@ library(ggplot2)
 library(ggExtra)
 
 ##Exercise 1
-df1 <- data.frame(x = runif(1000, min = -6, max = 6), y = runif(1000, -6, 6))
-p1 <- ggplot(df1, aes(x, y)) + geom_point() + theme_bw()
-ggMarginal(p1, type = "histogram")
+ex1 <- data.frame(x = runif(1000, min = -6, max = 6), y = runif(1000, -6, 6))
+ex1.plot <- ggplot(ex1, aes(x, y)) + geom_point() + theme_bw()
+ggMarginal(ex1.plot, type = "histogram")
 
 ```
 
 Exercise 2: 
 ```{r}
+library(ggplot2)
+library(ggExtra)
 # #Exercise 2
 # #replicate
 
-runs <- 1000
+samples <- 1000
+counter <- 0
 
 #set paths for X and Y
-X <-rep(NA, runs)
-Y<- rep(NA, runs)
+X <-rep(NA, samples)
+Y<- rep(NA, samples)
 
 
-#run the loop
-for(i in 1:runs){
-
-
+#Iterate through, sampling from the uniform until we have 1000 samples matching our conditions
+for(i in 1:samples){
+  
+  
   #go until we accept the sample
   while(TRUE){
-
+    
     #sample x and y
     x <- runif(1, -6, 6)
     y <- runif(1, -6, 6)
-
-    #see if we accept the sample
+    
+    #Rejection conditions
     if(y <= x){
-
-      #accept
+      
+      #Assignment
       X[i] = x
       Y[i] = y
-
+      counter <- counter + 1
+      
+      if(counter == 1000){
+        break
+      }
+      
+      
       #break, go to the next iteration
       break
     }
   }
 }
 
-data <- data.frame(X, Y)
-p1 <- ggplot(data, aes(X, Y)) + geom_point() + theme_bw()
-ggMarginal(p1, type = "histogram")
+ex2 <- data.frame(X, Y)
+ex2.plot <- ggplot(ex2, aes(X, Y)) + geom_point() + theme_bw()
+ggMarginal(ex2.plot, type = "histogram")
+print(counter)
+
 ```
 
 
@@ -279,42 +296,41 @@ ggMarginal(p1, type = "histogram")
 
 ```{r}
 #Exercise #3
-#replicate
-set.seed(110)
-sims <- 1000
+
+samples <- 1000
 
 #set paths for X and Y
-X <-rep(NA, sims)
-Y<- rep(NA, sims)
+X <-rep(NA, samples)
+Y<- rep(NA, samples)
 
 
 #run the loop
-for(i in 1:sims){
+for(i in 1:samples){
 
 
   #go until we accept the sample
   while(TRUE){
 
-    #sample x and y
+    #Sample from the uniform distribution
     x <- runif(1, -6, 6)
     y <- runif(1, -6, 6)
 
-    #see if we accept the sample
+    #Rejection conditions
     if(x^2 + y^2 <= 36){
 
-      #accept
+      #Assignment of accepted samples
       X[i] = x
       Y[i] = y
 
-      #break, go to the next iteration
+      #stop and continue on to the next sample
       break
     }
   }
 }
 
-data <- data.frame(X, Y)
-p1 <- ggplot(data, aes(X, Y)) + geom_point() + theme_bw()
-ggMarginal(p1, type = "histogram")
+ex3 <- data.frame(X, Y)
+ex3.plot <- ggplot(ex3, aes(X, Y)) + geom_point() + theme_bw()
+ggMarginal(ex3.plot, type = "histogram")
 
 ```
 
