@@ -56,14 +56,45 @@ bolkers_approach
 **2c) Brute force approach**
 
 ```{r}
+#Negative likelihood function
 binomNLL1 <- function(p) -sum(log(dbinom(3, 12, p)))
+
 
 #create a sequence to test with
 p.seq <- seq(0.01, 0.99, 0.01)
 
-#visually plot 
-plot(p.seq, sapply(p.seq, binomNLL1), type="l")
+#create a test vector 
+Likelihood.storage <- 100
 
-x <- sapply(p.seq, binomNLL1)
+#Loop through sequence to find MLE
+for(i in p.seq){
+  NLL <- (binomNLL1(i))
+  if(NLL < Likelihood.storage){
+    Likelihood.storage <- NLL
+    p <- i
+  }
+  
+}
+
+print(Likelihood.storage)
+print(p)
+
+# #or using dplyr
+# library(broom)
+# library(dplyr)
+# library(ggplot2)
+# library(readr)
+# library(sm)
+# library(tidyr)
+# 
+# 
+# crossing(
+#   p.seq = seq(0.01, 0.99, 0.01)
+# ) %>%
+#   rowwise() %>%
+#   mutate(
+#     NLL = -sum(log(dbinom(3, 12, prob = p.seq))))
+#   ) %>%
+#   arrange(desc(NLL))
 ```
 
