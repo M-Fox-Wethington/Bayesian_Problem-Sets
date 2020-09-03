@@ -1,0 +1,69 @@
+**Question 2** 
+
+**2a): Find the MLE of p (r)**
+
+Process:
+
+To find the MLE, maximize $L(\theta|x)$, with respect to $\theta$:
+
+1. calculate the derivative of $L(\theta|x)$ with respect to $\theta$
+2. set the derivative equal to zero
+3. Solve the resulting equation for $\theta\$
+
+$$ L(x|p) =\prod_{i=1}{}  {n \choose x}{f(x_i|p)={n \choose x}p^x}(1-p)^{1-x}  $$
+Becasue the liklihood function relates only to parameter p, 
+ $\frac{n!}{x!(n-x)!}$ is considered to be a fixed constant and is removed from consideration.
+ 
+taking the log-liklihood:
+
+$$ LogL(p|x) = l(p|x) = \sum\limits_{i=1}^n  logp+(n-x)\ log(1-p)$$
+
+$$l`(p|x) = \frac{x}{p}+\frac{n-x}{1-p}(-1) $$
+
+we're looking for the maximizer so we need to set the equation to zero and solve for p
+$$l`(p|x) = \frac{x}{p}+\frac{n-x}{1-p}(-1) = 0 $$
+
+$$\frac{x}{p}=\frac{n-x}{1-p} \Rightarrow $$
+
+$$ \hat{p}=\frac{x}{n} $$
+$$\hat{p}=\frac{3}{12} = .25$$
+
+**2b) Find the MLE using R's 'optim' function**
+
+https://kevintshoemaker.github.io/NRES-746/LAB3.html
+https://stackoverflow.com/questions/37552469/r-estimating-parameters-of-binomial-distribution
+https://stackoverflow.com/questions/26734744/how-to-plot-the-log-likelihood-of-binomial-distribution
+
+```{r}
+library(MASS)
+
+set.seed(100)
+
+#using Bolkers method--- p = 0.25
+
+k = 3
+N = 12
+
+binomNLL1 = function(p, k, N){
+  -sum(dbinom(k, prob=p, size = N, log=TRUE))
+}
+
+bolkers_approach <- optim(fn=binomNLL1, par= c(p=0.5), N=12, k=k) 
+bolkers_approach
+
+```
+
+**2c) Brute force approach**
+
+```{r}
+binomNLL1 <- function(p) -sum(log(dbinom(3, 12, p)))
+
+#create a sequence to test with
+p.seq <- seq(0.01, 0.99, 0.01)
+
+#visually plot 
+plot(p.seq, sapply(p.seq, binomNLL1), type="l")
+
+x <- sapply(p.seq, binomNLL1)
+```
+
