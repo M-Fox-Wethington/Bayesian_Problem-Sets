@@ -1,1 +1,1 @@
-# Bayesian_PS01
+# Bayesian Problem Sets
