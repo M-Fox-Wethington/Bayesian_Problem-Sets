@@ -46,6 +46,69 @@ group like terms together
 
 
 
+**1b ** 
+
+```{r}
+library(MCMCpack)
+
+known.mean <- 68
+unknown.sigma.sq <- 16
+
+n.5 <- 5
+n.100 <- 100
+n.50 <- 50
+n.500 <- 500
+n.5000 <- 5000
+
+n_list <- list(n.5, n.100, n.50, n.500, n.5000)
+# 
+# heights <- rnorm(n.100, mean = known.mean, sd=sqrt(unknown.sigma.sq))
+# 
+# #prior alphas
+# alpha0 <- 5
+# beta0 <- 20
+# mu <- 60
+# 
+# #Alpha and Beta parameters after finding the conjugate prior
+# alpha1 <- alpha0 + n.100/2 
+# beta1 <- beta0 + sum((heights - known.mean)^2)/2
+# 
+# #Calculate the posterior
+# posterior <- rinvgamma(10000, alpha1, beta1)
+# post.mean <- mean(posterior)
+# post.mean
+# 
+# post.var <- var(posterior)
+# post.var
+
+posterior.list <- list()
+post.mean.list <- list()
+post.var.list <- list()
+
+
+for(i in n_list){
+  heights <- rnorm(i, mean = known.mean, sd=sqrt(unknown.sigma.sq))
+  
+  #prior alphas
+  alpha0 <- 5
+  beta0 <- 20
+  mu <- 60
+  
+  #Alpha and Beta parameters after finding the conjugate prior
+  alpha1 <- alpha0 + i/2 
+  beta1 <- beta0 + sum((heights - known.mean)^2)/2
+  
+  #Calculate the posterior
+  posterior <- rinvgamma(10000, alpha1, beta1)
+  posterior.list <- append(posterior.list, posterior)
+  post.mean <- mean(posterior)
+  post.mean.list <- append(post.mean.list, post.mean)
+  post.var <- var(posterior)
+  post.var.list <- append(post.var.list, post.var)
+  
+  
+}
+```
 
 
 
