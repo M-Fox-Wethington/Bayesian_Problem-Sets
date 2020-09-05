@@ -1,3 +1,28 @@
+**Question 1** 
+
+Normal distribution with a known mean $\mu$, but unknown variance $\sigma^2$
+
+Likelihood: $f(x_1,...x_2|\mu,\sigma^2) = f(x_n|\mu,\sigma^2)=\prod \frac{1}{\sqrt{2\pi\sigma^2}}exp\{\frac{-(x_1-\mu)}{2\sigma^2}\}$ (standard for of normal distribution)
+
+$$f(x_n|\mu, \sigma^2)=(2\pi)^-\frac{2}{n}(\sigma^2)e^-\frac{1}{\sigma^2}\sum\frac{(x_i-\mu)^2}{2}$$ - liklihood with $\sigma^2$ as parameter of interest
+
+$$ Inverse\ Gamma: f(Y|\alpha, beta) = \frac{\beta^\alpha}{\gamma(\alpha)}\cdot y^-(\alpha=1)\cdot e^{(-\beta/y)}$$
+
+
+whe we think about prior, we write it in terms of sigma 2, so instead of y, we will have sigma2 
+
+$$posterior \propto likelihood * prior $$
+
+ignore constants $$[prior \cdot \frac{\beta^\alpha}{\gamma(\alpha)};/likelihood\ (2\pi)^\frac{-n}{2}]$$
+
+
+
+
+
+
+
+
+
 **Question 2** 
 
 **2a): Find the MLE of p (r)**
