@@ -6,6 +6,10 @@ Likelihood: $f(x_1,...x_2|\mu,\sigma^2) = f(x_n|\mu,\sigma^2)=\prod \frac{1}{\sq
 
 $$f(x_n|\mu, \sigma^2)=(2\pi)^-\frac{2}{n}(\sigma^2)e^-\frac{1}{\sigma^2}\sum\frac{(x_i-\mu)^2}{2}$$ - liklihood with $\sigma^2$ as parameter of interest
 
+We can implement the inverse gamma prior on $\sigma^2$, with shape parameters $\alpha_0$ and scale parameter $\beta_0$
+.$$p(\sigma^2|y,\mu) \propto p(y|\mu, \sigma^2)p(\sigma^2)$$
+$$Invgamma(\alpha_1, \beta_1) = Normal(\mu, \sigma^2)\cdot Invgamma(\alpha_0, \beta_0)$$
+
 $$ Inverse\ Gamma: f(Y|\alpha, beta) = \frac{\beta^\alpha}{\gamma(\alpha)}\cdot y^-(\alpha=1)\cdot e^{(-\beta/y)}$$
 
 
@@ -13,9 +17,29 @@ whe we think about prior, we write it in terms of sigma 2, so instead of y, we w
 
 $$posterior \propto likelihood * prior $$
 
+$$p(\theta|y,\mu)\propto \prod \frac{1}{\sqrt{2\pi\theta}}exp(-\frac{(y_i-\mu)^2}{2\theta})\cdot \frac{\beta_0^{\alpha_0}}{\Gamma()\alpha_0}\theta^{-\alpha_0+1}exp(-\frac{\beta_0}{\theta})$$
+
+$$\propto \prod \frac{1}{\sqrt{2\pi\theta}}exp(-\frac{(y_i-\mu)^2}{2\theta})\cdot \theta^{-\alpha_0+1}exp(-\frac{\beta_0}{\theta})$$
+
+$$= \theta^{-\frac{n}{2}}exp(-\frac{\sum(y_i-\mu)^2}{2\theta})\cdot \theta^{-\alpha_0+1}exp(-\frac{\beta_0}{\theta})$$
+$$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{\beta_0}{\theta}+\frac{\sum(y_i-\mu)^2}{2\theta})$$
+
+$$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{\beta_0+(\frac{\sum(y_i-\mu)^2}{2})}{\theta})$$
+
+$$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{2\beta_0+2(\frac{\sum(y_i-\mu)^2}{2})}{2\theta})$$
+we have not found the inverse gamma distribution!
+
+$$ p(\theta|y,\mu) \propto \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{2\beta_0+2(\frac{\sum(y_i-\mu)^2}{2})}{2\theta})$$
+
+$$\alpha_1 = \alpha_0 + \frac{n}{2}$$
+$$\beta_1=\beta_0+\frac{\sum(y_i-\mu)^2}{2}$$
+Our final posterior is $Invgamma(\alpha_0+\frac{n}{2},\beta_0+\frac{\sum(y_i-\mu)^2}{2} )$
+
 ignore constants $$[prior \cdot \frac{\beta^\alpha}{\gamma(\alpha)};/likelihood\ (2\pi)^\frac{-n}{2}]$$
 
 now multiply the prior and likelihood, ignoring the prior:
+
+
 
 $$ prior \cdot likelihood \propto (\sigma^2)^{-(\alpha+1)} e^{(\frac{\beta}{\sigma^2})}\cdot (\sigma^2)^{-(\frac{n}{2})}\cdot e^\frac{1}{\sigma^2}\sum\frac{(\mu_i-mu)^2}{2}  $$
 group like terms together 
