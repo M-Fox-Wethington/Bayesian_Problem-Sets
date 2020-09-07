@@ -4,7 +4,7 @@ Normal distribution with a known mean $\mu$, but unknown variance $\sigma^2$
 
 Likelihood: $f(x_1,...x_2|\mu,\sigma^2) = f(x_n|\mu,\sigma^2)=\prod \frac{1}{\sqrt{2\pi\sigma^2}}exp\{\frac{-(x_1-\mu)}{2\sigma^2}\}$ (standard for of normal distribution)
 
-$$f(x_n|\mu, \sigma^2)=(2\pi)^-\frac{2}{n}(\sigma^2)e^-\frac{1}{\sigma^2}\sum\frac{(x_i-\mu)^2}{2}$$ - liklihood with $\sigma^2$ as parameter of interest
+$$f(x_n|\mu, \sigma^2)=(2\pi)^-\frac{2}{n}(\sigma^2)e^-\frac{1}{\sigma^2}\sum\frac{(x_i-\mu)^2}{2}$$  liklihood with $\sigma^2$ as parameter of interest
 
 We can implement the inverse gamma prior on $\sigma^2$, with shape parameters $\alpha_0$ and scale parameter $\beta_0$
 .$$p(\sigma^2|y,\mu) \propto p(y|\mu, \sigma^2)p(\sigma^2)$$
@@ -13,7 +13,7 @@ $$Invgamma(\alpha_1, \beta_1) = Normal(\mu, \sigma^2)\cdot Invgamma(\alpha_0, \b
 $$ Inverse\ Gamma: f(Y|\alpha, beta) = \frac{\beta^\alpha}{\gamma(\alpha)}\cdot y^-(\alpha=1)\cdot e^{(-\beta/y)}$$
 
 
-whe we think about prior, we write it in terms of sigma 2, so instead of y, we will have sigma2 
+when we consider the prior, we write it in terms of sigma 2, so instead of y, we will have sigma2 
 
 $$posterior \propto likelihood * prior $$
 
@@ -27,22 +27,13 @@ $$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{\beta_0}{\theta}+\frac{\sum(y_i-\
 $$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{\beta_0+(\frac{\sum(y_i-\mu)^2}{2})}{\theta})$$
 
 $$= \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{2\beta_0+2(\frac{\sum(y_i-\mu)^2}{2})}{2\theta})$$
-we have not found the inverse gamma distribution!
+we have found the inverse gamma distribution!
 
 $$ p(\theta|y,\mu) \propto \theta^{-(\alpha+\frac{n}{2}+1)}exp(-\frac{2\beta_0+2(\frac{\sum(y_i-\mu)^2}{2})}{2\theta})$$
 
 $$\alpha_1 = \alpha_0 + \frac{n}{2}$$
 $$\beta_1=\beta_0+\frac{\sum(y_i-\mu)^2}{2}$$
-Our final posterior is $Invgamma(\alpha_0+\frac{n}{2},\beta_0+\frac{\sum(y_i-\mu)^2}{2} )$
-
-ignore constants $$[prior \cdot \frac{\beta^\alpha}{\gamma(\alpha)};/likelihood\ (2\pi)^\frac{-n}{2}]$$
-
-now multiply the prior and likelihood, ignoring the prior:
-
-
-
-$$ prior \cdot likelihood \propto (\sigma^2)^{-(\alpha+1)} e^{(\frac{\beta}{\sigma^2})}\cdot (\sigma^2)^{-(\frac{n}{2})}\cdot e^\frac{1}{\sigma^2}\sum\frac{(\mu_i-mu)^2}{2}  $$
-group like terms together 
+Our posterior is $Invgamma(\alpha_0+\frac{n}{2},\beta_0+\frac{\sum(y_i-\mu)^2}{2} )$
 
 
 
@@ -55,31 +46,10 @@ known.mean <- 68
 unknown.sigma.sq <- 16
 
 n.5 <- 5
-n.100 <- 100
 n.50 <- 50
-n.500 <- 500
 n.5000 <- 5000
 
-n_list <- list(n.5, n.100, n.50, n.500, n.5000)
-# 
-# heights <- rnorm(n.100, mean = known.mean, sd=sqrt(unknown.sigma.sq))
-# 
-# #prior alphas
-# alpha0 <- 5
-# beta0 <- 20
-# mu <- 60
-# 
-# #Alpha and Beta parameters after finding the conjugate prior
-# alpha1 <- alpha0 + n.100/2 
-# beta1 <- beta0 + sum((heights - known.mean)^2)/2
-# 
-# #Calculate the posterior
-# posterior <- rinvgamma(10000, alpha1, beta1)
-# post.mean <- mean(posterior)
-# post.mean
-# 
-# post.var <- var(posterior)
-# post.var
+n_list <- list(n.5, n.50, n.5000)
 
 posterior.list <- list()
 post.mean.list <- list()
@@ -87,16 +57,16 @@ post.var.list <- list()
 
 
 for(i in n_list){
-  heights <- rnorm(i, mean = known.mean, sd=sqrt(unknown.sigma.sq))
+  norm.samp <- rnorm(i, mean = known.mean, sd=sqrt(unknown.sigma.sq))
   
   #prior alphas
-  alpha0 <- 5
-  beta0 <- 20
-  mu <- 60
+  alpha0 <- 3
+  beta0 <- 10
+  mu <- 40
   
   #Alpha and Beta parameters after finding the conjugate prior
   alpha1 <- alpha0 + i/2 
-  beta1 <- beta0 + sum((heights - known.mean)^2)/2
+  beta1 <- beta0 + sum((norm.samp - known.mean)^2)/2
   
   #Calculate the posterior
   posterior <- rinvgamma(10000, alpha1, beta1)
@@ -106,8 +76,11 @@ for(i in n_list){
   post.var <- var(posterior)
   post.var.list <- append(post.var.list, post.var)
   
+  print(post.var.list)
   
 }
+
+
 ```
 
 
@@ -171,7 +144,7 @@ bolkers_approach
 
 ```
 
-**2c) Brute force approach**
+**2c) Brute force (grid search) approach**
 
 ```{r}
 #Negative likelihood function
@@ -197,142 +170,131 @@ for(i in p.seq){
 print(Likelihood.storage)
 print(p)
 
-# #or using dplyr
-# library(broom)
-# library(dplyr)
-# library(ggplot2)
-# library(readr)
-# library(sm)
-# library(tidyr)
-# 
-# 
-# crossing(
-#   p.seq = seq(0.01, 0.99, 0.01)
-# ) %>%
-#   rowwise() %>%
-#   mutate(
-#     NLL = -sum(log(dbinom(3, 12, prob = p.seq))))
-#   ) %>%
-#   arrange(desc(NLL))
 ```
 
 
 **2D - Bayesian Model Using rJAGS**
 
 ```{r}
-# set.seed(1280)
-# 
-# #############################
-# #
-# # Step #1: Set the working directory, and the directory where JAGS lives
-# #
-# #############################
-# 
-# jags.directory = "C:/Program Files/JAGS"
-# setwd("C:/Users/wmichael/Google Drive/BEE569/labs/test")
-# #############################
-# #
-# # Step #2: Load all the libraries and data
-# #
-# #############################
-# 
-# library(R2jags)
-# library(abind)
-# library(boot)
-# 
-# #
-# # Step #3: Write the statistical model code to a text file
-# #
-# #############################
-# 
-# sink("PS2_KoalaModel.jags")
+set.seed(1280)
+
+#############################
+#
+# Step #1: Set the working directory, and the directory where JAGS lives
+#
+#############################
+
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/labs/test")
+#############################
+#
+# Step #2: Load all the libraries and data
+#
+#############################
+
+library(R2jags)
+library(abind)
+library(boot)
+
+#
+# Step #3: Write the statistical model code to a text file
+#
+#############################
+
+#sink("PS2_KoalaModel.jags")
 # 
 # cat("
-# model 
+# model
 # {
-#   x ~ dbin(p, 12) #data sampled binomially with n=12 
+#   x ~ dbin(p, 12) #data sampled binomially with n=12
 #   p ~ dunif(0,1) # prior for the sex ratio of pouch young
 # 
 # }")
-# 
-# sink()
-# 
-# #############################
-# #
-# # Step #4: Make a list where you include all the data the model will need to run
-# #
-# #############################
-# 
-# 
-# dat <- list(x = 3)
-# 
-# #############################
-# 
-# #############################
-# #
-# # Step #5: Make a function (with no inputs) where you put a list of parameters and their initial values
-# # these are just starting values for your parameters. Hard coded in this case, where m is drawn from a lognormal distribution
-# #
-# #############################
-# 
-# InitStage <- function() {list(p = .5)}
-# #############################
-# #
-# # Step #6: Make a column vector with the names of the parameters you want to track
-# #
-# #############################
-# 
-# ParsStage <- c("p")
-# 
-# #############################
-# #
-# # Step #7: Set the variables for the MCMC
-# #
-# #############################
-# 
-# ni <- 10000  # number of draws from the posterior
-# nt <- 1    #thinning rate
-# nb <- 1000  # number to discard for burn-in
-# nc <- 2  # number of chains
-# 
-# #############################
-# #
-# # Step #8: Run the jags function to run the code
-# #
-# #############################
-# 
-# model = jags(inits=InitStage,
-#           n.chains=nc,
-#           model.file="PS2_KoalaModel.jags",
-#           working.directory=getwd(),
-#           data=dat,
-#           parameters.to.save=ParsStage,
-#           n.thin=nt,
-#           n.iter=ni,
-#           n.burnin=nb,
-#           DIC=T)
-# #############################
-# #
-# # Step #9: Print the summary and explore the object that was returned
-# #
-# #############################
-# 
-# model # prints results of the model
-# 
-# names(model)
-# 
-# names(model$BUGSoutput)
-# 
-# #The mean of the posterior distribution
-# model.mean <- model$BUGSoutput$mean
-# model.sd <- model$BUGSoutput$sd
-# 
-# model.mean
-# model.sd
-# 
-# #Pull out the credible intervals from the summary output
-# model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',3] #lower
-# model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',7] #upper 
+
+#sink()
+
+#############################
+#
+# Step #4: Make a list where you include all the data the model will need to run
+#
+#############################
+
+
+dat <- list(x = 3)
+
+#############################
+
+#############################
+#
+# Step #5: Make a function (with no inputs) where you put a list of parameters and their initial values
+# these are just starting values for your parameters. Hard coded in this case, where m is drawn from a lognormal distribution
+#
+#############################
+
+InitStage <- function() {list(p = .5)}
+#############################
+#
+# Step #6: Make a column vector with the names of the parameters you want to track
+#
+#############################
+
+ParsStage <- c("p")
+
+#############################
+#
+# Step #7: Set the variables for the MCMC
+#
+#############################
+
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 2  # number of chains
+
+#############################
+#
+# Step #8: Run the jags function to run the code
+#
+#############################
+
+model = jags(inits=InitStage,
+          n.chains=nc,
+          model.file="PS2_KoalaModel.jags",
+          working.directory=getwd(),
+          data=dat,
+          parameters.to.save=ParsStage,
+          n.thin=nt,
+          n.iter=ni,
+          n.burnin=nb,
+          DIC=T)
+#############################
+#
+# Step #9: Print the summary and explore the object that was returned
+#
+#############################
+
+model # prints results of the model
+
+names(model)
+
+names(model$BUGSoutput)
+
+#The mean of the posterior distribution
+model.mean <- model$BUGSoutput$mean
+model.sd <- model$BUGSoutput$sd
+
+model.mean
+model.sd
+
+#Pull out the credible intervals from the summary output
+dev.50 <- model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='deviance',5] #lower
+
+print("50% Deviance:", dev.50)
+print(dev.50)
+
+#Pull out the credible intervals from the summary output
+model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',3] #lower
+model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',7] #upper
 
 ```
 
