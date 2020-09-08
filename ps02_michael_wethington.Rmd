@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 **Question 1** 
 
 Normal distribution with a known mean $\mu$, but unknown variance $\sigma^2$
@@ -42,6 +47,8 @@ Our posterior is $Invgamma(\alpha_0+\frac{n}{2},\beta_0+\frac{\sum(y_i-\mu)^2}{2
 ```{r}
 library(MCMCpack)
 
+message=FALSE
+
 known.mean <- 68
 unknown.sigma.sq <- 16
 
@@ -69,21 +76,38 @@ for(i in n_list){
   beta1 <- beta0 + sum((norm.samp - known.mean)^2)/2
   
   #Calculate the posterior
-  posterior <- rinvgamma(10000, alpha1, beta1)
+  posterior <- list(rinvgamma(10000, alpha1, beta1))
   posterior.list <- append(posterior.list, posterior)
-  post.mean <- mean(posterior)
-  post.mean.list <- append(post.mean.list, post.mean)
-  post.var <- var(posterior)
-  post.var.list <- append(post.var.list, post.var)
   
-  print(post.var.list)
+
   
+
 }
+
+#plot the histograms under the different values of N
+hist((unlist(posterior.list[1])),
+     main =" Posterior Distribution: N = 5",
+     xlab = "Variance",
+     ylab = "Frequency",
+     col = "#FF6666")
+
+hist((unlist(posterior.list[2])),
+     main =" Posterior Distribution: N = 50",
+     xlab = "Variance",
+     ylab = "Frequency",
+     col = "#FF6666")
+
+
+hist((unlist(posterior.list[3])),
+     main =" Posterior Distribution: N = 5000",
+     xlab = "Variance",
+     ylab = "Frequency",
+     col = "#FF6666")
+
+
 
 
 ```
-
-
 
 
 
@@ -121,26 +145,22 @@ $$\hat{p}=\frac{3}{12} = .25$$
 
 **2b) Find the MLE using R's 'optim' function**
 
-https://kevintshoemaker.github.io/NRES-746/LAB3.html
-https://stackoverflow.com/questions/37552469/r-estimating-parameters-of-binomial-distribution
-https://stackoverflow.com/questions/26734744/how-to-plot-the-log-likelihood-of-binomial-distribution
-
 ```{r}
 library(MASS)
 
 set.seed(100)
 
-#using Bolkers method--- p = 0.25
+k = 3 # #of males
+N = 12 #total individuals
 
-k = 3
-N = 12
-
+#Negative likelihood model
 binomNLL1 = function(p, k, N){
   -sum(dbinom(k, prob=p, size = N, log=TRUE))
 }
 
-bolkers_approach <- optim(fn=binomNLL1, par= c(p=0.5), N=12, k=k) 
-bolkers_approach
+#Find the MLE
+NLL.model <- optim(fn=binomNLL1, par= c(p=0.5), N=12, k=k) 
+NLL.model
 
 ```
 
@@ -149,7 +169,6 @@ bolkers_approach
 ```{r}
 #Negative likelihood function
 binomNLL1 <- function(p) -sum(log(dbinom(3, 12, p)))
-
 
 #create a sequence to test with
 p.seq <- seq(0.01, 0.99, 0.01)
@@ -167,7 +186,7 @@ for(i in p.seq){
   
 }
 
-print(Likelihood.storage)
+#Value of p (0.25)
 print(p)
 
 ```
@@ -191,7 +210,6 @@ setwd("C:/Users/wmichael/Google Drive/BEE569/labs/test")
 # Step #2: Load all the libraries and data
 #
 #############################
-
 library(R2jags)
 library(abind)
 library(boot)
@@ -275,26 +293,15 @@ model = jags(inits=InitStage,
 
 model # prints results of the model
 
-names(model)
-
-names(model$BUGSoutput)
 
 #The mean of the posterior distribution
 model.mean <- model$BUGSoutput$mean
-model.sd <- model$BUGSoutput$sd
+model.median <- model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',5] 
 
-model.mean
-model.sd
+#Print out the model mean and median for comparison 
+model.mean #posterior mean
 
-#Pull out the credible intervals from the summary output
-dev.50 <- model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='deviance',5] #lower
-
-print("50% Deviance:", dev.50)
-print(dev.50)
-
-#Pull out the credible intervals from the summary output
-model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',3] #lower
-model$BUGSoutput$summary[row.names(model$BUGSoutput$summary)=='p',7] #upper
+model.median #Posterior median
 
 ```
 
