@@ -1,0 +1,18 @@
+---
+title: "ps03_michael_wethington"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+$$p(\pi|y) \propto p(y|\pi)p(\pi) $$
+
+$$= Binomial(n,\pi) \cdot Beta(\alpha, \beta) $$
+$$ {n \choose y}\pi^y (1-\pi)^{n-y} \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)}\pi^{(\alpha-1)}(1-\pi)^{(\beta-1)} $$
+
+$$\propto \pi^y(1-\pi)^{(n-y)}\pi^{(\alpha-1)}(1-\pi)^{(\beta-1)} $$
+
+$$ p(\pi|y) \propto \pi^{(y+\alpha-1)}(1-\pi)^{(n-y+\beta-1)}$$
+The posterior distribution is $Beta(y+\alpha, n-y+\beta)$
