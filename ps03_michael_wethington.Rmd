@@ -359,37 +359,39 @@ Pois_LgNorm.jags3 = jags(inits=lgNorm.inits,
 
 ################################################
 #Graph the Uniform Models
-#################################################
+################################################
 Pois_Unif1.dat <- as.data.frame(Pois_Unif1$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Unif1.dat$lambda)
+#hist(Pois_Unif1.dat$lambda)
 
 Pois_Unif2.dat <- as.data.frame(Pois_Unif2$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Unif2.dat$lambda)
+#hist(Pois_Unif2.dat$lambda)
 
 Pois_Unif3.dat <- as.data.frame(Pois_Unif3$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Unif3.dat$lambda)
-
+#hist(Pois_Unif3.dat$lambda)
 
 
 PoisUnif_Pst.plot <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,10)")+
-  theme_minimal()
+  ggtitle("Poission-Uniform Posterior (0,10)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 PoisUnif_Pst.plot2 <-  ggplot(Pois_Unif2.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,20)")+
-  theme_minimal()
+  ggtitle("Poission-Uniform Posterior (0,20)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 PoisUnif_Pst.plot3 <-  ggplot(Pois_Unif3.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform Posteriors (5,15)")+
-  theme_minimal()
+  ggtitle("Poission-Uniform Posterior (5,15)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 #Plot all three uniform prior models together 
@@ -398,7 +400,7 @@ unif.posterior <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
   geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
   geom_histogram(data= Pois_Unif2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
   geom_histogram(data = Pois_Unif3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  ggtitle("Poission-Uniform Posteriors")+
   theme_minimal()
 
 unif.posterior
@@ -412,35 +414,38 @@ plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3, labels= "AU
 #Graph the Gamma Models
 #################################################
 Pois_Gamma1.dat <- as.data.frame(Pois_Gamma1$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Gamma1.dat$lambda)
+#hist(Pois_Gamma1.dat$lambda)
 
 Pois_Gamma2.dat <- as.data.frame(Pois_Gamma2$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Gamma2.dat$lambda)
+#hist(Pois_Gamma2.dat$lambda)
 
 Pois_Gamma3.dat <- as.data.frame(Pois_Gamma3$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
-hist(Pois_Gamma2.dat$lambda)
+#hist(Pois_Gamma2.dat$lambda)
 
 
 
 PoisGamma_Pst.plot <-  ggplot(Pois_Gamma1.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,10)")+
-  theme_minimal()
+  ggtitle("Poission-Gamma Posterior (37,100)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 PoisGamma_Pst.plot2 <-  ggplot(Pois_Gamma2.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,20)")+
-  theme_minimal()
+  ggtitle("Poission-Gamma Posterior (6,2)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 PoisGamma_Pst.plot3 <-  ggplot(Pois_Gamma3.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform Posteriors (5,15)")+
-  theme_minimal()
+  ggtitle("Poission-Gamma Posterior (30,2)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 plot_grid(PoisGamma_Pst.plot, PoisGamma_Pst.plot2, PoisGamma_Pst.plot3, labels= "AUTO")
@@ -453,8 +458,9 @@ gamma.posterior <-  ggplot(Pois_Gamma1.dat, aes(x=lambda, color="#9999")) +
   geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
   geom_histogram(data= Pois_Gamma2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
   geom_histogram(data = Pois_Gamma3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,20)")+
-  theme_minimal()
+  ggtitle("Poission-Gamma Posteriors")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 gamma.posterior
@@ -476,7 +482,7 @@ LgNorm.posterior <-  ggplot(Pois_LgNorm.jags1.dat, aes(x=lambda, color="#9999"))
   geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
   geom_histogram(data= Pois_LgNorm.jags2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
   geom_histogram(data = Pois_LgNorm.jags3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  ggtitle("Poission-Lognormal Posteriors")+
   theme_minimal()
 
 LgNorm.posterior
@@ -485,22 +491,24 @@ LgNorm.posterior
 Pois_LgNorm.jags1.plot <-  ggplot(Pois_LgNorm.jags1.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Lognormal (Posteriors (0,10)")+
-  theme_minimal()
-
+  ggtitle("Poission-Lognormal (Posterior (1,1)")+
+  theme_minimal() + 
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 Pois_LgNorm.jags2.plot2 <-  ggplot(Pois_LgNorm.jags2.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Lognormal(Posteriors (0,20)")+
-  theme_minimal()
+  ggtitle("Poission-Lognormal(Posterior (4,10)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 Pois_LgNorm.jags3.plot3 <-  ggplot(Pois_LgNorm.jags3.dat, aes(x=lambda, color="#9999")) +
   
   geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
-  ggtitle("Poission-Lognormal Posteriors (5,15)")+
-  theme_minimal()
+  ggtitle("Poission-Lognormal Posterior (2,20)")+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 8, face = "bold"))
 
 
 
@@ -511,7 +519,7 @@ Pois_LgNorm.jags3.plot3 <-  ggplot(Pois_LgNorm.jags3.dat, aes(x=lambda, color="#
 plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3,
           PoisGamma_Pst.plot, PoisGamma_Pst.plot2, PoisGamma_Pst.plot3,
           Pois_LgNorm.jags1.plot, Pois_LgNorm.jags2.plot2, Pois_LgNorm.jags3.plot3,
-          labels= "AUTO")
+          labels= "AUTO", label_size = 6)
 
 
 ########
@@ -538,9 +546,11 @@ Name.list <- c("Unif1", "Unif2", "Unif3", "Gamma1", "Gamma2","Gamma3", "LogNorm1
 ci.2.5 <- c(u1[1], u2[1], u3[1], g1[1], g2[1], g2[1], l1[1], l2[1], l3[1])
 ci.95 <- c(u1[2], u2[2], u3[2], g1[2], g2[2], g2[2], l1[2], l2[2], l3[2])
 
-# df <- data.frame(Name.list, ci.2.5, ci.95 )
-# df
+df <- data.frame(Name.list, ci.2.5, ci.95 )
+df
 # 
+
+knitr::kable(df, col.names = gsub("[.]", " ", names(df)))
 
 #Calculate the MLE of the poisson data 
 dax <- c(3,5,2,3,3,0,2,6,1,3)
@@ -554,5 +564,16 @@ fitdistr(dax, densfun = "Poisson")
 
 **Table** 
 
+\begin{center}
+\captionof{table}{Multirow Table.}
+\begin{tabular}{l|l|r}
+\textbf{Value 1} & \textbf{Value 2} & \textbf{Value 3} \\
+$\alpha$ & $\beta$ & $\gamma$ \\ \hline
+\multirow{2}{*}{12} & 1110.1 & a \\
+ & 10.1 & b \\ \hline
+3 & 23.113231 & c \\
+4 & 25.113231 & d
+\end{tabular}
+\end{center}
 
 
