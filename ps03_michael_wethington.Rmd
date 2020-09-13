@@ -7,6 +7,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+**Question 1** 
+
 $$p(\pi|y) \propto p(y|\pi)p(\pi) $$
 
 $$= Binomial(n,\pi) \cdot Beta(\alpha, \beta) $$
@@ -16,3 +18,541 @@ $$\propto \pi^y(1-\pi)^{(n-y)}\pi^{(\alpha-1)}(1-\pi)^{(\beta-1)} $$
 
 $$ p(\pi|y) \propto \pi^{(y+\alpha-1)}(1-\pi)^{(n-y+\beta-1)}$$
 The posterior distribution is $Beta(y+\alpha, n-y+\beta)$
+
+
+**Question 2** 
+
+Because the parameter of the Poisson distribution can in principle be any positive real number, we want a prior whose support is $(0,\infty)$. 
+
+The posterior with the conjugate gamma prior:
+
+$\lambda \backsim Gamma(\alpha, \beta)$
+
+The likelihood:
+
+$$ Gamma(\lambda| r, v) = \frac{v^{-r}\lambda^{r-1}e^{-v\lambda}}{\Gamma(r)}\propto\lambda^{r-1}e^{-v\lambda} $$
+
+Prior Likelihood
+
+$$\frac{v^r}{\Gamma(r)}\lambda^{r-1}e^{-v\lambda} \frac{1}{y!}\lambda^ye^{-\lambda}$$
+
+$$\propto \lambda^{r-1}e^{-v\lambda}\lambda^ye^-\lambda$$
+$$= \lambda^{r+y-1}e^{-(v+1)\lambda}$$
+$$\lambda|r \backsim Gamma(r+y, v+1)$$
+
+
+
+
+
+**Question 3** 
+
+
+```{r}
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/problem_sets/03/scripts")
+
+library(R2jags)
+library(abind)
+library(boot)
+library(ggplot2)
+library(cowplot) #library for multiplots
+library(MASS) #for fitdistr function
+
+#################################################
+#Uniform Model Builder
+#########################
+# sink("Pois_Unif1.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dunif(0, 10)
+# 
+# }")
+# sink()
+# 
+# 
+# sink("Pois_Unif2.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dunif(0, 20)
+# 
+# }")
+# sink()
+# 
+# 
+# 
+# 
+# sink("Pois_Unif3.jags")
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dunif(5, 15)
+# }")
+# sink()
+# 
+# 
+# #################################################
+# #Gamma Model Builder
+# #########################
+# sink("Pois_Gamma1.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dgamma(37, 100)
+# 
+# }")
+# sink()
+# 
+# 
+# sink("Pois_Gamma2.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dgamma(6, 2)
+# 
+# }")
+# sink()
+# 
+# 
+# 
+# 
+# sink("Pois_Gamma3.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dgamma(30, 2)
+# 
+# }")
+# sink()
+# 
+# 
+# ################################################
+# #Lognormal Model Builder
+# #########################
+# sink("Pois_LgNorm1.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dlnorm(1, 1)
+# 	
+# 
+# }")
+# sink()
+# 
+# 
+# sink("Pois_LgNorm2.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dlnorm(4, 10)
+# 	
+# 
+# }")
+# sink()
+# 
+# 
+# sink("Pois_LgNorm3.jags")
+# 
+# cat("
+# model {
+#   for (i in 1:10) #Loop through each data entry
+#   {
+# 		y[i] ~ dpois(lambda) #define likelihood
+#   }
+# 
+# 	#Define Prior
+# 	lambda ~ dlnorm(2, 20)
+# 	
+# 
+# }")
+# sink()
+# 
+# 
+
+
+
+
+#################################################
+#Data and parameter specification
+#################################################
+set.seed(1001)
+Dat <- list(y = c(3,5,2,3,3,0,2,6,1,3))
+probs = c(0.025, 0.95) # define intervals
+
+
+unif.inits <- function() {list(lambda = runif(1,0,10))} #trying to initialize 1 lambda for each chain
+unif.inits2 <- function() {list(lambda = runif(1,0,20))} #trying to initialize 1 lambda for each chain
+unif.inits3 <- function() {list(lambda = runif(1,5,15))} #trying to initialize 1 lambda for each chain
+Pois.inits <- function() {list(lambda = runif(1,0,10))} #trying to initialize 1 lambda for each chain
+lgNorm.inits <- function() {list(lambda = runif(1,0,10))} #trying to initialize 1 lambda for each chain
+
+
+Params <- c("lambda")
+
+
+ni <- 1100  # number of draws from the posterior
+nt <- 1    #thinning rate (reduces autocorrelation)
+nb <- 100  # number to discard for burn-in (when parameter start wide, and start moving close to each other)
+nc <- 3  # number of chains
+
+
+#################################################
+#Uniform Models Compiler
+################################################
+Pois_Unif1 = jags(inits=unif.inits,
+                  n.chains=nc,
+                  model.file="Pois_Unif1.jags",
+                  working.directory=getwd(),
+                  data=Dat,
+                  parameters.to.save=Params,
+                  n.thin=nt,
+                  n.iter=ni,
+                  n.burnin=nb,
+                  DIC=T)
+
+
+Pois_Unif2 = jags(inits=unif.inits2,
+                  n.chains=nc,
+                  model.file="Pois_Unif2.jags",
+                  working.directory=getwd(),
+                  data=Dat,
+                  parameters.to.save=Params,
+                  n.thin=nt,
+                  n.iter=ni,
+                  n.burnin=nb,
+                  DIC=T)
+
+Pois_Unif3 = jags(inits=unif.inits3,
+                  n.chains=nc,
+                  model.file="Pois_Unif3.jags",
+                  working.directory=getwd(),
+                  data=Dat,
+                  parameters.to.save=Params,
+                  n.thin=nt,
+                  n.iter=ni,
+                  n.burnin=nb,
+                  DIC=T)
+
+################################################
+#Gamma Models Compiler
+################################################
+Pois_Gamma1 = jags(inits=Pois.inits,
+                   n.chains=nc,
+                   model.file="Pois_Gamma1.jags",
+                   working.directory=getwd(),
+                   data=Dat,
+                   parameters.to.save=Params,
+                   n.thin=nt,
+                   n.iter=ni,
+                   n.burnin=nb,
+                   DIC=T)
+
+Pois_Gamma2 = jags(inits=Pois.inits,
+                   n.chains=nc,
+                   model.file="Pois_Gamma2.jags",
+                   working.directory=getwd(),
+                   data=Dat,
+                   parameters.to.save=Params,
+                   n.thin=nt,
+                   n.iter=ni,
+                   n.burnin=nb,
+                   DIC=T)
+
+Pois_Gamma3 = jags(inits=Pois.inits,
+                   n.chains=nc,
+                   model.file="Pois_Gamma3.jags",
+                   working.directory=getwd(),
+                   data=Dat,
+                   parameters.to.save=Params,
+                   n.thin=nt,
+                   n.iter=ni,
+                   n.burnin=nb,
+                   DIC=T)
+
+
+
+
+################################################
+#LogNormal Models Compiler
+################################################
+Pois_LgNorm.jags1 = jags(inits=lgNorm.inits,
+                         n.chains=nc,
+                         model.file="Pois_LgNorm1.jags",
+                         working.directory=getwd(),
+                         data=Dat,
+                         parameters.to.save=Params,
+                         n.thin=nt,
+                         n.iter=ni,
+                         n.burnin=nb,
+                         DIC=T)
+
+
+Pois_LgNorm.jags2 = jags(inits=lgNorm.inits,
+                         n.chains=nc,
+                         model.file="Pois_LgNorm2.jags",
+                         working.directory=getwd(),
+                         data=Dat,
+                         parameters.to.save=Params,
+                         n.thin=nt,
+                         n.iter=ni,
+                         n.burnin=nb,
+                         DIC=T)
+
+Pois_LgNorm.jags3 = jags(inits=lgNorm.inits,
+                         n.chains=nc,
+                         model.file="Pois_LgNorm3.jags",
+                         working.directory=getwd(),
+                         data=Dat,
+                         parameters.to.save=Params,
+                         n.thin=nt,
+                         n.iter=ni,
+                         n.burnin=nb,
+                         DIC=T)
+
+################################################
+#Graph the Uniform Models
+#################################################
+Pois_Unif1.dat <- as.data.frame(Pois_Unif1$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Unif1.dat$lambda)
+
+Pois_Unif2.dat <- as.data.frame(Pois_Unif2$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Unif2.dat$lambda)
+
+Pois_Unif3.dat <- as.data.frame(Pois_Unif3$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Unif3.dat$lambda)
+
+
+
+PoisUnif_Pst.plot <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,10)")+
+  theme_minimal()
+
+
+PoisUnif_Pst.plot2 <-  ggplot(Pois_Unif2.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  theme_minimal()
+
+
+PoisUnif_Pst.plot3 <-  ggplot(Pois_Unif3.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform Posteriors (5,15)")+
+  theme_minimal()
+
+
+#Plot all three uniform prior models together 
+unif.posterior <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
+  geom_histogram(data= Pois_Unif2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  geom_histogram(data = Pois_Unif3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  theme_minimal()
+
+unif.posterior
+
+#Plot all three uniform prior models in a grid
+plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3, labels= "AUTO")
+
+
+
+#################################################
+#Graph the Gamma Models
+#################################################
+Pois_Gamma1.dat <- as.data.frame(Pois_Gamma1$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Gamma1.dat$lambda)
+
+Pois_Gamma2.dat <- as.data.frame(Pois_Gamma2$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Gamma2.dat$lambda)
+
+Pois_Gamma3.dat <- as.data.frame(Pois_Gamma3$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+hist(Pois_Gamma2.dat$lambda)
+
+
+
+PoisGamma_Pst.plot <-  ggplot(Pois_Gamma1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,10)")+
+  theme_minimal()
+
+
+PoisGamma_Pst.plot2 <-  ggplot(Pois_Gamma2.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  theme_minimal()
+
+
+PoisGamma_Pst.plot3 <-  ggplot(Pois_Gamma3.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform Posteriors (5,15)")+
+  theme_minimal()
+
+
+plot_grid(PoisGamma_Pst.plot, PoisGamma_Pst.plot2, PoisGamma_Pst.plot3, labels= "AUTO")
+
+
+
+
+gamma.posterior <-  ggplot(Pois_Gamma1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
+  geom_histogram(data= Pois_Gamma2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  geom_histogram(data = Pois_Gamma3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  theme_minimal()
+
+
+gamma.posterior
+
+
+
+#################################################
+#Graph the Lognormal models
+#################################################
+#Compile the posteriors
+Pois_LgNorm.jags1.dat <- as.data.frame(Pois_LgNorm.jags1$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+Pois_LgNorm.jags2.dat <- as.data.frame(Pois_LgNorm.jags2$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+Pois_LgNorm.jags3.dat <- as.data.frame(Pois_LgNorm.jags3$BUGSoutput$sims.matrix) # Extract values and Cast to dataframe so we can access the lambda values
+
+
+#Plot all three uniform prior models together 
+LgNorm.posterior <-  ggplot(Pois_LgNorm.jags1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#d7191c", alpha = 0.8, bins = 30)+
+  geom_histogram(data= Pois_LgNorm.jags2.dat, fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  geom_histogram(data = Pois_LgNorm.jags3.dat, fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Uniform (Posteriors (0,20)")+
+  theme_minimal()
+
+LgNorm.posterior
+
+
+Pois_LgNorm.jags1.plot <-  ggplot(Pois_LgNorm.jags1.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#d7191c", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Lognormal (Posteriors (0,10)")+
+  theme_minimal()
+
+
+Pois_LgNorm.jags2.plot2 <-  ggplot(Pois_LgNorm.jags2.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#fdae61", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Lognormal(Posteriors (0,20)")+
+  theme_minimal()
+
+
+Pois_LgNorm.jags3.plot3 <-  ggplot(Pois_LgNorm.jags3.dat, aes(x=lambda, color="#9999")) +
+  
+  geom_histogram(fill="#91bfdb", color="#e9ecef", alpha = 0.8, bins = 30)+
+  ggtitle("Poission-Lognormal Posteriors (5,15)")+
+  theme_minimal()
+
+
+
+
+#################################################
+#Master Plot
+#############################
+plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3,
+          PoisGamma_Pst.plot, PoisGamma_Pst.plot2, PoisGamma_Pst.plot3,
+          Pois_LgNorm.jags1.plot, Pois_LgNorm.jags2.plot2, Pois_LgNorm.jags3.plot3,
+          labels= "AUTO")
+
+
+########
+#Table of Confidence Intervals
+#################################################
+
+u1<- quantile(Pois_Unif1.dat$lambda, probs = probs)
+u2 <-quantile(Pois_Unif2.dat$lambda, probs = probs)
+u3 <- quantile(Pois_Unif3.dat$lambda, probs = probs)
+
+
+g1 <- quantile(Pois_Gamma1.dat$lambda, probs = probs)
+g2 <- quantile(Pois_Gamma2.dat$lambda, probs = probs)
+g3 <- quantile(Pois_Gamma3.dat$lambda, probs = probs)
+
+
+l1 <- quantile(Pois_LgNorm.jags1.dat$lambda, probs = probs)
+l2 <- quantile(Pois_LgNorm.jags2.dat$lambda, probs = probs)
+l3 <- quantile(Pois_LgNorm.jags3.dat$lambda, probs = probs)
+
+
+
+Name.list <- c("Unif1", "Unif2", "Unif3", "Gamma1", "Gamma2","Gamma3", "LogNorm1", "LogNorm2", "LogNorm3")
+ci.2.5 <- c(u1[1], u2[1], u3[1], g1[1], g2[1], g2[1], l1[1], l2[1], l3[1])
+ci.95 <- c(u1[2], u2[2], u3[2], g1[2], g2[2], g2[2], l1[2], l2[2], l3[2])
+
+# df <- data.frame(Name.list, ci.2.5, ci.95 )
+# df
+# 
+
+#Calculate the MLE of the poisson data 
+dax <- c(3,5,2,3,3,0,2,6,1,3)
+fitdistr(dax, densfun = "Poisson")
+
+```
+
+
+
+
+
+**Table** 
+
+
+
