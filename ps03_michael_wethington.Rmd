@@ -226,8 +226,6 @@ library(MASS) #for fitdistr function
 # 
 
 
-
-
 #################################################
 #Data and parameter specification
 #################################################
@@ -402,6 +400,10 @@ PoisUnif_Pst.plot3 <-  ggplot(Pois_Unif3.dat, aes(x=lambda, color="#9999")) +
   theme(plot.title = element_text(size = 8, face = "bold"))
 
 
+#Plot all three uniform prior models in a grid
+plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3, labels= "AUTO")
+
+
 #Plot all three uniform prior models together 
 unif.posterior <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
   
@@ -412,9 +414,6 @@ unif.posterior <-  ggplot(Pois_Unif1.dat, aes(x=lambda, color="#9999")) +
   theme_minimal()
 
 unif.posterior
-
-#Plot all three uniform prior models in a grid
-plot_grid(PoisUnif_Pst.plot, PoisUnif_Pst.plot2, PoisUnif_Pst.plot3, labels= "AUTO")
 
 
 
@@ -474,7 +473,6 @@ gamma.posterior <-  ggplot(Pois_Gamma1.dat, aes(x=lambda, color="#9999")) +
 gamma.posterior
 
 
-
 #################################################
 #Graph the Lognormal models
 #################################################
@@ -520,7 +518,6 @@ Pois_LgNorm.jags3.plot3 <-  ggplot(Pois_LgNorm.jags3.dat, aes(x=lambda, color="#
 
 
 
-
 #################################################
 #Master Plot
 #############################
@@ -549,7 +546,6 @@ l2 <- quantile(Pois_LgNorm.jags2.dat$lambda, probs = probs)
 l3 <- quantile(Pois_LgNorm.jags3.dat$lambda, probs = probs)
 
 
-
 Name.list <- c("Unif1", "Unif2", "Unif3", "Gamma1", "Gamma2","Gamma3", "LogNorm1", "LogNorm2", "LogNorm3")
 ci.2.5 <- c(u1[1], u2[1], u3[1], g1[1], g2[1], g2[1], l1[1], l2[1], l3[1])
 ci.95 <- c(u1[2], u2[2], u3[2], g1[2], g2[2], g2[2], l1[2], l2[2], l3[2])
@@ -566,6 +562,9 @@ mle <- fitdistr(data, densfun = "Poisson")
 se <- as.numeric(mle[2])
 MLE.95.CI <- as.numeric(var(data))+(1.96*se)
 MLE.2.5.CI <- as.numeric(var(data))-(1.96*se)
+
+#Maximum Likelihood estimate of lambda 
+mle[1]
 
 #Upper CI
 MLE.95.CI
