@@ -1,0 +1,150 @@
+---
+title: "PS04"
+author: "Michael Wethington"
+date: "9/16/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r, echo=FALSE}
+count <- 0
+accept <- c()
+
+sigma = 2 
+
+#target distribution (f(x))
+target <- function(x) (1/(2*sigma))*exp(-abs(x)/(sigma))
+
+#proposal distribution (g(x)) --- this envelopes f(x)!
+proposal <- function (x) dnorm(x, 0, 6)
+
+#Multiplicative constant with f(x)/g(x) <= M for all x
+M <- 4
+
+
+X <- rnorm(4500, 0, 6)
+U <- rnorm (4500, 0, 6)
+
+count <- 1
+x.accept <- c()
+
+while(count <= 4500 & length(x.accept) <= 1000){
+  test_u <- U[count]
+  test_x <- target(X[count])/(4*proposal(X[count]))
+  
+  if(test_u <= test_x){
+    x.accept =  rbind(x.accept, X[count])
+    count = count+1
+  }
+  
+count = count+1
+}
+
+
+plot(x.accept, target(x.accept))
+
+
+```
+
+
+
+
+**Exercise 2**
+
+```{r}
+#########################################################
+#Step 1. 
+# Sample random values from a candidate distribution with support over 
+# same range of x values as the target distribution
+#########################################################
+#target distribution (f(x))
+target <- function(x) (1/(2*sigma))*exp(-abs(x)/(sigma))
+
+#proposal distribution (g(x)) --- this DENSITY envelopes f(x)!
+proposal <- function (x) dnorm(x, 0, 6)
+
+set.seed(1004)
+
+N = 10000
+step1.sample.storage <- c()
+
+for(i in N){
+  step1.sample <- rnorm(i, 0, 6) #RANDOM sample
+  step1.sample.storage <- c(step1.sample.storage, step1.sample) 
+}
+
+
+
+#########################################################
+#Step 2:
+# Find the probability of obtaining those values from a target
+# distribution (i.e. the probability density at each x value drawn)
+#########################################################
+proposal.pd.storage <- c()
+
+for(i in step1.sample.storage){
+  proposal.pd.sample <- proposal(i)
+  proposal.pd.storage <- rbind(proposal.pd.storage,proposal.pd.sample )
+  
+}
+#########################################################
+#Step 3: 
+# Normalize the probabilities from Step 2 so they sum to 1
+# This is accomplished by dividing each x.i by the sum
+
+#########################################################
+normalized.storage <- c()
+
+for(i in proposal.pd.storage){
+  norm.i <- i/sum(proposal.pd.storage)
+  normalized.storage <- c(normalized.storage, norm.i)
+}
+
+
+
+#########################################################
+#Step 4:
+# Use (now normalized) probabilities as weights in a resampling of 
+# random values from step 1.
+
+# IOW, use sample function with replacement from values drawn
+# in step 1, and use the probabilities from step 3 as weights for
+# bootstrap sampling
+#########################################################
+
+
+
+step.4.storage <- c()
+
+#Normalized probabilities 
+step.4.storage<- c(sample(step1.sample.storage, 
+                          replace = TRUE, 
+                          prob = normalized.storage))
+
+
+
+#########################################################
+#Step 5: 
+#Use the normalized probabilities as weights in a resampling
+# of values from Step 1
+#########################################################
+d <- density(step.4.storage)
+plot(d)
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
