@@ -58,24 +58,31 @@ plot(x.accept, target(x.accept))
 
 ```{r}
 #########################################################
-#Step 1. 
-# Sample random values from a candidate distribution with support over 
-# same range of x values as the target distribution
-#########################################################
+
+N#QUESTION: SHOULD I USE THE TARGET OR THE PROPOSAL DISTRIBUTION 
+
 #target distribution (f(x))
 target <- function(x) (1/(2*sigma))*exp(-abs(x)/(sigma))
 
 #proposal distribution (g(x)) --- this DENSITY envelopes f(x)!
 proposal <- function (x) dnorm(x, 0, 6)
 
+sigma = 2
+
 set.seed(1004)
 
 N = 10000
-step1.sample.storage <- c()
+
+#Step 1. 
+# Sample random values from a candidate distribution with support over 
+# same range of x values as the target distribution
+#########################################################
+
+candidate.values.storage <- c()
 
 for(i in N){
-  step1.sample <- rnorm(i, 0, 6) #RANDOM sample
-  step1.sample.storage <- c(step1.sample.storage, step1.sample) 
+  candidate.val <- rnorm(i, 0, 100) #RANDOM sample
+  candidate.values.storage <- c(candidate.values.storage, candidate.val) 
 }
 
 
@@ -85,11 +92,11 @@ for(i in N){
 # Find the probability of obtaining those values from a target
 # distribution (i.e. the probability density at each x value drawn)
 #########################################################
-proposal.pd.storage <- c()
+target.pd.storage <- c()
 
-for(i in step1.sample.storage){
-  proposal.pd.sample <- proposal(i)
-  proposal.pd.storage <- rbind(proposal.pd.storage,proposal.pd.sample )
+for(i in candidate.values.storage){
+  target.pd.sample <- target(i)
+  target.pd.storage <- rbind(target.pd.storage, target.pd.sample )
   
 }
 #########################################################
@@ -100,11 +107,10 @@ for(i in step1.sample.storage){
 #########################################################
 normalized.storage <- c()
 
-for(i in proposal.pd.storage){
-  norm.i <- i/sum(proposal.pd.storage)
+for(i in target.pd.storage){
+  norm.i <- i/sum(target.pd.storage)
   normalized.storage <- c(normalized.storage, norm.i)
 }
-
 
 
 #########################################################
@@ -117,34 +123,196 @@ for(i in proposal.pd.storage){
 # bootstrap sampling
 #########################################################
 
-
-
-step.4.storage <- c()
+SIR.dist <- c()
 
 #Normalized probabilities 
-step.4.storage<- c(sample(step1.sample.storage, 
-                          replace = TRUE, 
-                          prob = normalized.storage))
-
-
+SIR.dist<- c(sample(candidate.values.storage, 
+                    replace = TRUE, 
+                    prob = normalized.storage))
 
 #########################################################
-#Step 5: 
-#Use the normalized probabilities as weights in a resampling
-# of values from Step 1
+#Plot the density
 #########################################################
-d <- density(step.4.storage)
+d <- density(SIR.dist)
 plot(d)
 
+########################################################
+#Exercise 3
+#Calculate E[X] from the distribution  
+SIR.expected <- sum(sample(length(SIR.dist), SIR.dist, replace = TRUE)/length(SIR.dist))
+SIR.mean <- mean(SIR.dist)
+SIR.len <- length(SIR.dist)
+
+SIR.Expected <- SIR.mean/SIR.len
+
+########################################################
+#Exercise 4
+#Calculate the standard error of the SIR
+# Boostrap sample many times with replacement from SIR dist
+# then find SE of 
+########################################################
+
+#bootstrap sample from SIR distribution
+SIR.boot <- sample(SIR.dist, 1000, replace = TRUE)
+
+SIR.SE <- ((var(SIR.boot))/(sqrt(length(SIR.dist))))
+
+SIR.SE
+
+
 
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+library(gtools)
+library(ggplot2)
+library(ggExtra)
+
+
+#purge the env objects
+rm(list= ls())
+
+#likelihood function 
+L <- function(theta_1, theta_2){
+  prod(
+    sum(
+      (dbinom(2,5,theta_1)*(dbinom(5,5,theta_2))),
+      (dbinom(3,5,theta_1)*(dbinom(4,5,theta_2))),
+      (dbinom(4,5,theta_1)*(dbinom(3,5,theta_2))),
+      (dbinom(5,5,theta_1)*(dbinom(2,5,theta_2)))),
+    sum(
+      (dbinom(1,6,theta_1)*(dbinom(4,4,theta_2))),
+      (dbinom(2,6,theta_1)*(dbinom(3,4,theta_2))),
+      (dbinom(3,6,theta_1)*(dbinom(2,4,theta_2))),
+      (dbinom(4,6,theta_1)*(dbinom(1,4,theta_2))),
+      (dbinom(5,6,theta_1)*(dbinom(0,4,theta_2)))),
+    sum(
+      (dbinom(0,4,theta_1)*(dbinom(6,6,theta_2))),
+      (dbinom(1,4,theta_1)*(dbinom(5,6,theta_2))),
+      (dbinom(2,4,theta_1)*(dbinom(4,6,theta_2))),
+      (dbinom(3,4,theta_1)*(dbinom(3,6,theta_2))),
+      (dbinom(4,4,theta_1)*(dbinom(2,6,theta_2)))))}
+
+
+###########################################################
+#Sample from Priors
+###########################################################
+
+N <- 10000
+
+#Storage vectors
+Theta1 <- c()
+Theta2 <- c()
+
+#Get uniform prior samples for Theta1 and Theta2
+for(i in N){
+  Theta1 <- c(Theta1, runif(i, 0, 1)) 
+  Theta2 <- c(Theta2, runif(i, 0, 1)) 
+}
+
+#Generate a proper dataframe
+df <- data.frame(Theta1, Theta2)
+
+
+
+###########################################################
+#Calculate likelihoods using prior values
+###########################################################
+
+Likelihoods <- c() 
+
+#Calculate the likelihood of the data for each sample from prior distributions
+for(i in 1:length(df$Theta1)){
+  L.i <- L(df$Theta1[i],df$Theta2[i])
+  Likelihoods <- c(Likelihoods, L.i)
+}
+
+#add Likelihoods as column to dataframe
+df$Likelihoods <- Likelihoods 
+
+
+###########################################################
+#Normalize the likelihoods 
+###########################################################
+
+#find sum of likelihoods so we can normalize them 
+Likelihood.sum <- sum(df$Likelihoods)
+
+#Storage vector 
+Normalized.L <- c()
+
+#Normalize the Likelihoods 
+for(i in 1:length(df$Likelihoods)){
+  Normalized.L <- c(Normalized.L, df$Likelihoods[i]/Likelihood.sum)
+}
+
+df$Normalized.L <- Normalized.L 
+
+
+#########################################################################################
+#Generate Posteriors:
+# Resample from the priors using the normalized probabilities as weights (sample function)
+#########################################################################################
+Theta1.posterior <- c()
+Theta2.posterior <- c()
+
+#Sample from the prior using Normalized probabilities as weights 
+Theta1.posterior<- c(sample(Theta1, 
+                    replace = TRUE, 
+                    prob = Normalized.L))
+
+Theta2.posterior<- c(sample(Theta2, 
+                     replace = TRUE, 
+                     prob = Normalized.L))
+
+df.posteriors <- data.frame(Theta1.posterior, Theta2.posterior)
+
+
+
+###########################################################
+#Plot Stuff
+###########################################################
+
+#PRIORS
+# Prior.plot <- ggplot(data= df, aes(x= df$Theta1, y = df$Theta2))+
+#   geom_point()+
+#   theme(legend.position = "none")
+# 
+# #add marginals
+# Pr.marginals <- ggMarginal(Prior.plot, type = "histogram")
+# Pr.marginals
+
+
+#POSTERIORS
+Posterior.plot <- ggplot(df.posteriors, aes(x= Theta1.posterior, y = Theta2.posterior))+
+  geom_point()+
+  theme(legend.position = "none")
+
+#add marginals
+Posterior.marg <- ggMarginal(Posterior.plot, type = "histogram")
+Posterior.marg
+
+
+
+
+#########################
+#IS THIS THE POSTERIOR???
+#########################
+#Recalculate the likelihoods using the new 
+# new.Likelihoods <- c() 
+# 
+# #Calculate the likelihood of the data for each sample from prior distribution
+# for(i in 1:length(SIR.dist1)){
+#   L.i <- L(SIR.dist1[i],SIR.dist2[i])
+#   new.Likelihoods <- c(new.Likelihoods, L.i)
+# }
+# 
+# 
+# d <- density(new.Likelihoods)
+# 
+# plot(d)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
