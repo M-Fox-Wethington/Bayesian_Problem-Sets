@@ -1,0 +1,63 @@
+---
+title: "PS05"
+author: "Michael Wethington"
+date: "9/23/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(boot)
+
+#Choose Starting Values
+df <- read.csv("C:/Users/wmichael/Google Drive/BEE569/labs/l5/data/plants.csv")
+
+current_b0 <- rnorm(1, 0, 1)
+current_b1 <- rnorm(1, 0, 1)
+
+b0_accepted <- c()
+b1_accepted <- c()
+
+
+N = 1000
+step_sigma <- .14
+
+#Scale the elevation 
+df$Elevation <- scale(df$Elevation)
+
+for(i in 1:N){
+  
+  
+  next_b0 <- current_b0+rnorm(1, 0, step_sigma)
+  next_b1 <- current_b1+rnorm(1, 0, step_sigma)
+  
+  accept_probability <- sum(dbinom(df$PlantEnd, df$Plants, inv.logit(next_b0 + next_b1 * df$Elevation), log = T)) +
+                              dnorm(next_b0, 0, 1, log = T) + dnorm(next_b1, 0, 1, log=T) -
+                              
+                              sum(dbinom(df$PlantEnd, df$Plants, inv.logit(current_b0 + current_b1 * df$Elevation), log = T)) -
+                              dnorm(current_b0, 0, 1, log =T) - dnorm(current_b1, 0,1,log=T)
+  
+  
+  if(accept_probability > runif(1,0,1)){
+    
+    b0_accepted <- c(b0_accepted, next_b0)
+    b1_accepted <- c(b1_accepted, next_b1)
+  }
+  
+}
+
+
+plot(b0_accepted, b1_accepted)
+
+```
+
+
+
+
+
+Gibbs Sampler
+
+```{r cars}
+
+```
