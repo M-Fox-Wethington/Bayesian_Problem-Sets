@@ -54,60 +54,117 @@ plot(b0_accepted, b1_accepted)
 
 ```
 
+**Ex. 6: Why is there a sum in the exponent for likelihood?** 
 
 
 
+**Ex. 7: Construct a Gibbs Sampler**
 
-**Gibbs Sampler**
-
-```{r cars}
-
-# initialize vectors to store 
-mu <- c()
-tau <- c()
+```{r}
 
 
 gibbs.dat <- read.csv("C:/Users/wmichael/Google Drive/BEE569/labs/l5/data/gibbs.csv")
-
 names(gibbs.dat)[names(gibbs.dat) == "X2.8"] <- "vector"
-gibbs.dat
 
 
-gamma <- 1
-omega_square <- 0.16
-alpha <- 0.1
-beta <- 0.1
 
-mu[1] <- rnorm(n = 1,mean=gamma,omega_square)# Mu
-tau[1] <- rgamma(1,alpha,beta) # Tau
 
-# number of iterations
-n.iter <- 10000
-
-# starting values (index starting at 1, not 0)
-#mu[1] <- runif(1, 0, 1)
-#tau[1] <- runif(1, 0, 1)
-
-# iterate through and sample
-for (t in 2:n.iter){
+gibbs <- function(N.iters, gamma, omega_square, alpha, beta){
   
-  mu[t] <- rnorm(n = 1, ((tau[t-1]*sum(gibbs.dat$vector))+(gamma/omega_square))/(length(gibbs.dat$vector)*tau[t-1]+(1/omega_square)), 
-  1/((length(gibbs.dat$V1)*tau[t-1])+(1/omega_square))) # update  dependent on x[t-1]
+  #Function parameters
+  gamma <- gamma
+  omega_square <- omega_square
+  alpha <- alpha
+  beta <- beta
   
+  #storage Vectors 
+  mu <- c()
+  tau <- c()
+  mu[1] <- rnorm(n = 1,mean=gamma,omega_square)# Mu
+  tau[1] <- rgamma(1,alpha,beta) # Tau
   
-  tau[t] <- rgamma(1, (alpha + 0.5*length(gibbs.dat$vector)), (beta + 0.5*(sum(((gibbs.dat$vector-mu[t])^2))))) 
-
+  # number of iterations
+  n.iter <- N.iters
+  
+  # iterate through and sample
+  for (t in 2:n.iter){
+    
+    mu[t] <- rnorm(n = 1, ((tau[t-1]*sum(gibbs.dat$vector))+(gamma/omega_square))/(length(gibbs.dat$vector)*tau[t-1]+(1/omega_square)), 
+                   1/((length(gibbs.dat$V1)*tau[t-1])+(1/omega_square))) # update  dependent on x[t-1]
+    
+    
+    tau[t] <- rgamma(1, (alpha + 0.5*length(gibbs.dat$vector)), (beta + 0.5*(sum(((gibbs.dat$vector-mu[t])^2))))) 
   }
 
-
-# scatterplot of bivariate (x,) pairs
-plot(mu, tau)
-# histogram of marginal distribution for x
-# marginalized out mu
-hist(mu, breaks = 20)
-# histogram of marginal distribution for 
-# marginalized out tau
-hist(tau, breaks = 20)
+  #Create and return a dataframe with the posteriors of mu and tau
+  df <- data.frame(mu, tau)
+  
+return(df)
+  
+}
 
 
 ```
+
+**Ex 08: USe three chains to check convergence, and provide polots of chains and the posterior histograms for both $\mu$ and $\tau$ **
+
+```{r}
+
+#Plot histograms of tau and mu
+
+df<- gibbs(1000, 1, 1, 10, .5)
+# scatterplot of bivariate (x,) pairs
+plot(df$mu, df$tau)
+# histogram of marginal distribution for x
+# marginalized out mu
+hist(df$mu, breaks = 20)
+# histogram of marginal distribution for 
+# marginalized out tau
+hist(df$tau, breaks = 20)
+
+
+
+#
+df1<- gibbs(1000, 1, 1, 10, .5)
+plot(df1$mu, type= 'l')
+hist(df$mu, breaks = 20)
+plot(df1$tau, type= 'l')
+hist(df$tau, breaks = 20)
+
+
+df2 <- gibbs(1000, 10, 1, 10, .5)
+plot(df2$mu, type= 'l')
+hist(df2$mu, breaks = 20)
+plot(df2$tau, type= 'l')
+hist(df2$tau, breaks = 20)
+
+df3 <- gibbs(1000, 15, 1, 10, .5)
+plot(df3$mu, type= 'l')
+hist(df3$mu, breaks = 20)
+plot(df3$tau, type= 'l')
+hist(df3$tau, breaks = 20)
+```
+
+
+
+
+
+**Ex 09: What are the 95% credible intervals for $\mu$ and $\tau$?**
+
+```{r}
+
+```
+
+
+**Ex 10: Do your answers to Q8 and Q9 make sense? Histogram the original data and plot the posterior distribution implid by you posterior mean. Does the plot make sense? Plot the distributions of $\mu$ and $\tau$
+
+```{r}
+posterior <-rnorm(1000, mean = df1$mu, sd = 1/df$tau )
+post.hist <- hist(posterior, col = "lightblue")
+
+raw.dat <- hist(gibbs.dat$vector)
+
+plot(post.hist) # Plot 1st histogram using a transparent color
+plot(raw.dat, add = TRUE) # Add 2nd histogram using different color
+```
+
