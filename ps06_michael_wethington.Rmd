@@ -1,0 +1,451 @@
+---
+title: "Lab06"
+author: "Michael Wethington"
+date: "9/30/2020"
+output: html_document
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+
+
+# Step #1: Set the working directory, and the directory where JAGS lives
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/problem_sets/06/scripts")
+
+#write the data
+sim.data <- rbeta(100, 2,5)
+#write.csv(sim.data, file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/06/lab06.csv")
+
+
+
+# Step #2: Load all the libraries and data
+library(R2jags)
+library(abind)
+library(boot)
+library(MASS)
+
+sim.data.100<-rbeta(100,2,5)
+sim.data.50<-rbeta(50,2,5)
+sim.data.10 <-rbeta(10,2,5)
+
+
+```
+
+**Exercise 1** 
+```{r}
+#visualize the data
+boxplot(df$Percent ~ df$Group)
+```
+
+
+```{r}
+
+
+
+sink("Week6_BetaModel.jags")
+cat("
+model {
+  for (i in 1:length(y)) {
+		y[i] ~ dbeta(alpha, beta)
+  }
+	
+	alpha ~ dgamma(.01, .01) #simulate from these values
+	beta ~ dgamma(.01, .01)
+	
+#use the arrow when you want to explicitly define a value (i.e. this value is 3)
+	
+}",fill = TRUE)
+sink()
+
+
+
+#create a data list that gets fed to jags
+Dat <- list(y = sim.data.100)
+
+#Set initial parameters
+InitStage <- function() {list(alpha = 1, beta = 1)}
+
+#Vector for variables to track
+ParsStage <- c("alpha", "beta")
+
+#Set up the variable values for the MCMC
+ni <- 1100  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 100  # number to discard for burn-in
+nc <- 2  # number of chains
+
+# Step #8: Run the jags function to run the code
+m = jags(inits=InitStage,
+         n.chains=nc,
+         model.file="Week6_BetaModel.jags",
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+#print out the results
+m
+
+#plot the posteriors for alpha and beta
+par(mfrow = c(2,1))
+hist(m$BUGSoutput$sims.matrix[,1], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", alpha, sep = "")))
+hist(m$BUGSoutput$sims.matrix[,2], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", beta, sep = "")))
+
+#Extract the means (these should be close the the parameter values we initially set (i.e. 2,5)) 
+mean(m$BUGSoutput$sims.matrix[,1])
+mean(m$BUGSoutput$sims.matrix[,2])
+
+
+
+```
+
+**Exercise 1b - Check with different sample totals (n = 50, n = 10). What Happens to the posterior?**
+
+
+
+
+
+
+**Exercise 2 - Confirm your results with fitdistr**
+```{r}
+modl.fit <- fitdistr(sim.data.100, densfun = "beta", start = list(shape1 = 1, shape2 = 1))
+mod.fit
+```
+
+#Exercise 3
+
+```{r}
+
+  
+```
+
+```{r}
+
+```
+
+
+**Exercise 3 Model the sea slug data with a normal, then with a beta distribution** 
+
+
+
+Set working directory, load libraries and raw data
+```{r}
+
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/problem_sets/06/scripts")
+df <- read.csv("C:/Users/wmichael/Google Drive/BEE569/problem_sets/06/scripts/seaslugs.csv", header = TRUE)
+
+library(R2jags)
+library(abind)
+library(boot)
+```
+Model as a normal $$Y_i \backsim ~ N(\mu_i, \sigma^2)$$
+
+$$y_i |g_i, \mu, \sigma^2 \backsim N (\mu_{gi}, \sigma^2) \\ 
+g_i element (1,...G)$$
+```{r}
+
+sink("Week6_ex3a.jags")
+cat("
+model {
+
+  #priors
+  sigma ~ dunif(0,100)
+  tau <-  pow(sigma, -2)
+  
+
+  for (i in 1:length(y)) {
+  	y[i] ~ dnorm(means[groups[i]], tau)
+  }
+  
+  
+  for (i in 1:8)	{
+    means[i] ~ dnorm(0.1, 0.001)
+  }
+
+}", fill = TRUE)
+sink()
+
+#create a data list that gets fed to jags
+Dat <- list(
+  y = df$Percent,
+  groups = df$Group
+)
+
+#create a function for the initial parameters
+InitStage <- function() {list(means= rnorm(8,0,0),
+                              sigma = rgamma(1,1.0,1.0))}
+
+#create a vector for parameters we want to track
+ParsStage <- c("means","sigma")
+
+#Establish MCMC variable 
+ni <- 11000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+#Compile and run the model
+m = jags(inits=InitStage,
+         n.chains=nc,
+         model.file="Week6_ex3a.jags",
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+#print the results
+m
+
+#pull out the individual chains of data (should have 9 columns, 8 means and 1 sigma)
+chains <- m$BUGSoutput$sims.matrix[,2:10]
+chains
+
+
+# Check convergence for group means
+par(mfrow = c(4,2))
+for(i in 1:8){
+  plot(chains[,i],type= "l", main = "Chain Values")
+}
+
+
+#Check convergence for sigma
+plot(chains[,9], type = 'l', main = expression(paste("Chain values for Sigma")))
+
+#plot the posterior density distribution for the chains
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+for (i in 1:8){
+  hist(chains[,i], breaks = 30, main = "Posterior Probability Density - Chains", sep = "", col = "lightblue")
+}
+
+#plot the posterior density distribution for sigma
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+hist(chains[,9], breaks = 30, main = "Posterior Probability Density - Sigma", sep = "", col = "lightblue")
+
+
+
+```
+
+**Exercise 3b - do it again but with a more appropriate distribution**
+
+Model the data using a Beta distribution because we're working with data that ranges from 0 to 1. 
+
+In order to solve for the mean and variances, we need to use moment method estimation for the Beta distribution
+
+
+
+$$Y_i \backsim ~ Beta(\alpha, \beta)$$
+
+
+
+$$a = (\frac{1-\mu}{\sigma^2}-\frac{1}{\mu})$$
+
+$$B = \alpha(\frac{1}{\mu}-1)$$
+
+
+```{r}
+sink("Week6_ex3b.jags")
+cat("
+model {
+
+  #priors
+  sigma ~ dunif(0,100)
+  tau <-  pow(sigma, -2)
+  
+
+  for (i in 1:length(y)) {
+  	y[i] ~ dbeta(alpha[groups[i]], alpha[groups[i]])
+  }
+  
+  #loop through and establish group priors
+  for (i in 1:8)	{
+  alpha[i] ~ dgamma(1,0.001)
+  beta[i] ~ dgamma(1,0.001)
+  
+  #calculate mu and sigma with moment matching
+  mu[i] <- alpha[i] / (alpha[i]+beta[i])
+  sigma[i] <-pow(alpha[i]*beta[i] / (pow(alpha[i]+beta[i],2))*(alpha[i] + beta[i] + 1),0.5)
+  }
+
+}", fill = TRUE)
+sink()
+
+#create a data list that gets fed to jags
+
+Dat <- list(
+  y = df$Percent,
+  groups = df$Group
+)
+
+#create a function for the initial parameters
+InitStage <- function() {list(alpha = rgamma(8, 0.01, 0.01)), beta = rgamma(8, 0.01, 0.01))}
+
+#create a vector for parameters we want to track
+ParsStage <- c("mu","sigma")
+
+#Establish MCMC variable 
+ni <- 11000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+#Compile and run the model
+m = jags(inits=InitStage,
+         n.chains=nc,
+         model.file="Week6_ex3b.jags",
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+#print the results
+m
+
+#pull out the individual chains of data (should have 9 columns, 8 means and 1 sigma)
+chains <- m$BUGSoutput$sims.matrix[,2:10]
+chains
+
+
+# Check convergence for group means
+par(mfrow = c(4,2))
+for(i in 1:8){
+  plot(chains[,i],type= "l", main = "Chain Values")
+}
+
+
+#Check convergence for sigma
+plot(chains[,9], type = 'l', main = expression(paste("Chain values for Sigma")))
+
+#plot the posterior density distribution for the chains
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+for (i in 1:8){
+  hist(chains[,i], breaks = 30, main = "Posterior Probability Density - Chains", sep = "", col = "lightblue")
+}
+
+#plot the posterior density distribution for sigma
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+hist(chains[,9], breaks = 30, main = "Posterior Probability Density - Sigma", sep = "", col = "lightblue")
+
+
+
+```
+
+**Exercise 4 - Model using contrasts**
+
+Mean of group 1 is the control. 
+
+
+
+```{r}
+
+sink("Week6_ex4.jags")
+cat("
+model {
+  #priors
+  sigma ~ dunif(0,100)
+  tau <-  pow(sigma, -2)
+  
+
+  for (i in 1:length(y)) {
+  	y[i] ~ dbeta(alpha[groups[i]], alpha[groups[i]])
+  }
+  
+  #loop through and establish group priors
+  for (i in 1:8)	{
+  alpha[i] ~ dgamma(1,0.001)
+  beta[i] ~ dgamma(1,0.001)
+  
+  #calculate mu and sigma with moment matching
+  mu[i] <- alpha[i] / (alpha[i]+beta[i])
+  sigma[i] <-pow(alpha[i]*beta[i] / (pow(alpha[i]+beta[i],2))*(alpha[i] + beta[i] + 1),0.5)
+  }
+  
+  #Esbilsh the contrasts to compare against the control group
+  for (i in 1:7){
+  contrast[i] <- mu[i+1] - mu[i]
+  }
+}", fill = TRUE)
+sink()
+
+#create a data list that gets fed to jags
+
+Dat <- list(
+  y = df$Percent,
+  groups = df$Group
+)
+
+#create a function for the initial parameters
+InitStage <- function() {list(alpha = rgamma(8, 0.01, 0.01)), beta = rgamma(8, 0.01, 0.01))}
+
+#create a vector for parameters we want to track
+ParsStage <- c("mu","sigma","contrast")
+
+#Establish MCMC variable 
+ni <- 11000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+#Compile and run the model
+m = jags(inits=InitStage,
+         n.chains=nc,
+         model.file="Week6_ex4.jags",
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+#print the results
+m
+
+#pull out the individual chains of data (should have 9 columns, 8 means and 1 sigma)
+chains <- m$BUGSoutput$sims.matrix[,2:10]
+chains
+
+
+# Check convergence for group means
+par(mfrow = c(4,2))
+for(i in 1:8){
+  plot(chains[,i],type= "l", main = "Chain Values")
+}
+
+
+#Check convergence for sigma
+plot(chains[,9], type = 'l', main = expression(paste("Chain values for Sigma")))
+
+#plot the posterior density distribution for the chains
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+for (i in 1:8){
+  hist(chains[,i], breaks = 30, main = "Posterior Probability Density - Chains", sep = "", col = "lightblue")
+}
+
+#plot the posterior density distribution for sigma
+plot.new()
+par(mfrow = c(4,2), mar = rep(2,4))
+hist(chains[,9], breaks = 30, main = "Posterior Probability Density - Sigma", sep = "", col = "lightblue")
+
+
+
+
+
+```
+
+
