@@ -1,0 +1,777 @@
+---
+title: "PS_07"
+author: "Michael Wethington"
+date: "10/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r }
+
+library(MCMCvis)
+library(R2jags)
+library(abind)
+library(boot)
+library(tidyr)
+library(ggplot2)
+
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data")
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+#amel <- data$Amelanchier.canadensis
+#Temp <- scale(data[,2])
+
+```
+
+
+**Exercise 0_a**
+
+Is there a statistically significant relationship between mean temperatures and flowering date? (Note that, when doing a Bayesian analysis, we are not strictly involved in “hypothesis testing” (e.g., we have no null model, no p-values, etc.). However, in a loose mapping between Bayesian approaches and frequentists approaches, data analysts will often use overlap between the credible interval and zero [or other null value] as a measure of “statistical significance”.)
+
+Plot raw, posterior median, 95% percentile of the posterior we don't tend to put prediction interval on plots, we plot posterior mean or median, then interval around that (representing uncertainty about the mean/median line that we're plotting. what do we take the mean of? (for each temp value, we take all of the samples x for alpha[i] + beta[i]*sample, run through all xs, and take median for all of those posteriors. ) 
+
+we don't have to do anything with prediction intervals (these would be applicable to a time-series forecast)
+
+1. raw data + posterior median 
+2. histogram of posteriors (alpha, beta, sigma posteriors)
+3. chains
+
+use quantile on posteriors to get (e.g. quantile(beta, 0.025, 0.975))
+```{r}
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data <- data[,c(1,2,3)]
+
+
+#modeling distributions with normal distribution
+#Model for SINGLE species
+fileForJAGS_beta <- "Week7_JAGS_Ex0.jags"
+cat("
+  model {
+  for (i in 1:length(y)){
+    y[i] ~ dnorm(mu[i], tau)
+    mu[i]<- alpha + beta * MAMTemp[i]
+  }
+  
+  alpha ~ dnorm(0,0.001)
+  beta ~ dnorm(0,0.001)
+  
+  tau <- pow(sigma,-2)
+  sigma ~ dgamma(0.001,0.001)
+
+    }",fill = TRUE, file= fileForJAGS_beta)
+
+#Data as list for JAGS
+Dat <- list(y = data$Amelanchier.canadensis, MAMTemp = data$MAMTemp)
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = rnorm(1,0,1), beta = rnorm(1,0,1), sigma = rgamma(1,2,0.01))} 
+
+#Parameters we want to track
+ParsStage <- c("alpha","beta","sigma")
+
+#Variables for MCMC
+ni <- 11000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+#JAGS model
+MCMC_Data_ex0 = jags(inits=InitStage,
+         n.chains=nc,
+         model.file="Week7_JAGS_Ex0.jags",
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+
+
+#Summarize the model 
+MCMCsummary(MCMC_Data_ex0, round = 2)
+
+#Summarize Alpha
+MCMCsummary(MCMC_Data_ex0, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(MCMC_Data_ex0, 
+            params = 'beta')
+
+
+
+#Check posteriors for convergence
+MCMCtrace(MCMC_Data_ex0, params = c('alpha', 'beta', 'sigma'), ISB = FALSE, pdf = FALSE )
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(MCMC_Data_ex0, 
+         params = 'beta', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(MCMC_Data_ex0, 
+         params = 'alpha', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+
+alpha.mean<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="alpha",1]; print(alpha.mean)
+alpha.median<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="alpha",5]; print(alpha.median)
+
+beta.mean<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="beta",1]; print(beta.mean)
+beta.median<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="beta",5]; print(beta.median)
+
+alpha.sd<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="alpha",2]; print(alpha.sd)
+beta.sd<-MCMC_Data_ex0$BUGSoutput$summary[row.names(MCMC_Data_ex0$BUGSoutput$summary)=="beta",2]; print(beta.sd)
+
+
+
+
+# #plot the posteriors for alpha and beta
+par(mfrow = c(3,1))
+hist(MCMC_Data_ex0$BUGSoutput$sims.matrix[,1], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", alpha, sep = "")))
+hist(MCMC_Data_ex0$BUGSoutput$sims.matrix[,2], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", beta, sep = "")))
+hist(MCMC_Data_ex0$BUGSoutput$sims.matrix[,3], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", sigma, sep = "")))
+# 
+# #Extract the means (these should be close the the parameter values we initially set (i.e. 2,5)) 
+#mean(m$BUGSoutput$sims.matrix[,1])
+# mean(m$BUGSoutput$sims.matrix[,2])
+
+# 
+# data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+# combined <- gather(data, key = "species", value = "Day", `Amelanchier.canadensis`:`Viola.pedata`)
+# p <- qplot(Year, Day,data = combined)
+# p + geom_abline(intercept = MCMC_Data_ex0$BUGSoutput$mean$alpha, slope = MCMC_Data_ex0$BUGSoutput$mean$beta, colour = "blue") +
+#   geom_abline(intercept = MCMC_Data_ex0$BUGSoutput$summary[9], slope = MCMC_Data_ex0$BUGSoutput$summary[10], colour = "red", linetype = "dashed") +
+#   geom_abline(intercept = MCMC_Data_ex0$BUGSoutput$summary[25], slope = MCMC_Data_ex0$BUGSoutput$summary[26], colour = "red", linetype = "dashed")
+
+
+
+#plot over original data
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+data_long <- melt(data, id.vars = c("Year", "MAMTemp"))
+
+slope_temp <- as.numeric(MCMC_Data_ex0$BUGSoutput$mean[2])
+intercept_temp <- as.numeric(MCMC_Data_ex0$BUGSoutput$mean[1])
+
+slope_temp_5 <- as.numeric(MCMC_Data_ex0$BUGSoutput$summary[2,3])
+slope_temp_95 <- as.numeric(MCMC_Data_ex0$BUGSoutput$summary[2,7])
+
+
+intercept_temp_5 <- as.numeric(MCMC_Data_ex0$BUGSoutput$summary[1,3])
+intercept_temp_95 <- as.numeric(MCMC_Data_ex0$BUGSoutput$summary[1,7])
+
+
+ggplot(data_long, aes(x= Year, y = value))+
+  geom_point() +
+  geom_abline(mapping = aes(slope = slope_temp, intercept = intercept_temp)) +
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_5), linetype = "dashed") + 
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_95), linetype = "dashed")
+
+
+
+```
+
+
+
+
+**Ex:0b**
+
+
+```{r}
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,2]<- (data[,2] - mean(data[,2]))/sd(data[,2]) #standardizing temp
+
+
+#Model for MULTIPLE species
+ fileForJAGS <- "Week7_JAGS_Ex0_temp.jags"
+cat("
+  model {
+for (i in 1:30)
+{
+    mu[i]<- alpha + beta * MAMTemp[i]
+  
+for(j in 3:34)
+  {
+    y[i,j] ~ dnorm(mu[i], tau)
+  } #i
+
+}#j
+    alpha ~ dnorm(0,0.001)
+    beta ~ dnorm(0,0.001)
+    
+    tau <- pow(sigma,-2)
+    sigma ~ dgamma(0.001,0.001)
+
+    }",fill = TRUE, file= fileForJAGS) 
+    
+
+
+#Data as list for JAGS
+Dat <- list(y = as.matrix(data), MAMTemp = data[,2])
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = rnorm(1,0,1), beta = rnorm(1,0,1), sigma = rgamma(1,2,0.01))} 
+
+#Parameters we want to track
+ParsStage <- c("alpha","beta","sigma")
+
+#Variables for MCMC
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+#JAGS model
+mcmc_temp = jags(inits=InitStage,
+            n.chains=nc,
+            model.file="Week7_JAGS_Ex0_temp.jags",
+            working.directory=getwd(),
+            data=Dat,
+            parameters.to.save=ParsStage,
+            n.thin=nt,
+            n.iter=ni,
+            n.burnin=nb,
+            DIC=T)
+
+
+#Summarize the model 
+MCMCsummary(mcmc_temp, round = 2)
+
+#Summarize Alpha
+MCMCsummary(mcmc_temp, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(mcmc_temp, 
+            params = 'beta')
+
+
+
+#Check posteriors for convergence
+MCMCtrace(mcmc_temp, params = c('alpha', 'beta', 'sigma'), ISB = FALSE, pdf = FALSE )
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(mcmc_temp, 
+         params = 'alpha', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(mcmc_temp, 
+         params = 'beta', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+
+
+alpha.mean<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="alpha",1]; print(alpha.mean)
+alpha.median<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="alpha",5]; print(alpha.median)
+
+beta.mean<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="beta",1]; print(beta.mean)
+beta.median<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="beta",5]; print(beta.median)
+
+alpha.sd<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="alpha",2]; print(alpha.sd)
+beta.sd<-mcmc_temp$BUGSoutput$summary[row.names(mcmc_temp$BUGSoutput$summary)=="beta",2]; print(beta.sd)
+
+
+
+
+# #plot the posteriors for alpha and beta
+par(mfrow = c(3,1))
+hist(mcmc_temp$BUGSoutput$sims.matrix[,1], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", alpha, sep = "")))
+hist(mcmc_temp$BUGSoutput$sims.matrix[,2], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", beta, sep = "")))
+hist(mcmc_temp$BUGSoutput$sims.matrix[,3], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", sigma, sep = "")))
+
+
+#Plot on the original data with confidence intervals
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+combined <- gather(data, key = "species", value = "Day", `Amelanchier.canadensis`:`Viola.pedata`)
+p <- qplot(Year, Day, data = combined)
+p + geom_abline(intercept = mcmc_temp$BUGSoutput$mean$alpha, slope = mcmc_temp$BUGSoutput$mean$beta, colour = "blue") +
+  geom_abline(intercept = mcmc_temp$BUGSoutput$summary[9], slope = mcmc_temp$BUGSoutput$summary[10], colour = "red", linetype = "dashed") +
+  geom_abline(intercept = mcmc_temp$BUGSoutput$summary[25], slope = mcmc_temp$BUGSoutput$summary[26], colour = "red", linetype = "dashed")
+
+```
+
+**Ex1 - Year**
+Modify the code to use Year rather than Mean Spring Temperature as the covariate. Is there a statistically significant relationship between Year and Flowering Date? Copy and paste code, summary of parameters, and relevant plots.
+```{r}
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,2]<- (data[,2] - mean(data[,2]))/sd(data[,2]) #standardizing temp
+
+
+ fileForJAGS <- "Week7_JAGS_Ex1_year.jags"
+cat("
+  model {
+    for (i in 1:30)
+    {
+        mu[i]<- alpha + beta * year[i]
+        
+    for(j in 3:32)
+      {
+        y[i,j] ~ dnorm(mu[i], tau)
+        
+      } #i
+    
+    }#j
+        alpha ~ dnorm(0,0.001)
+        beta ~ dnorm(0,0.001)
+        
+        tau <- pow(sigma,-2)
+        sigma ~ dgamma(0.001,0.001)
+
+    }",fill = TRUE, file= fileForJAGS) 
+    
+
+
+#Data as list for JAGS
+Dat <- list(y = as.matrix(data), year = data[,1])
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = rnorm(1,0,1), beta = rnorm(1,0,1), sigma = rgamma(1,2,0.01))} 
+
+#Parameters we want to track
+ParsStage <- c("alpha","beta","sigma")
+
+#Variables for MCMC
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+#JAGS model
+m_year = jags(inits=InitStage,
+            n.chains=nc,
+            model.file="Week7_JAGS_Ex1_year.jags",
+            working.directory=getwd(),
+            data=Dat,
+            parameters.to.save=ParsStage,
+            n.thin=nt,
+            n.iter=ni,
+            n.burnin=nb,
+            DIC=T)
+
+
+#Summarize the model 
+MCMCsummary(m_year, round = 2)
+
+#Summarize Alpha
+MCMCsummary(m_year, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(m_year, 
+            params = 'beta')
+
+
+
+#Check posteriors for convergence
+MCMCtrace(m_year, params = c('alpha', 'beta', 'sigma'), ISB = FALSE, pdf = FALSE )
+
+
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(m_year, 
+         params = 'alpha', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(m_year, 
+         params = 'beta', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+
+
+alpha.mean<-m_year$BUGSoutput$summary[row.names(m_year$BUGSoutput$summary)=="alpha",1]; print(alpha.mean)
+
+beta.mean<-m_year$BUGSoutput$summary[row.names(m_year$BUGSoutput$summary)=="beta",1]; print(beta.mean)
+
+alpha.sd<-m_year$BUGSoutput$summary[row.names(m_year$BUGSoutput$summary)=="alpha",2]; print(alpha.sd)
+beta.sd<-m_year$BUGSoutput$summary[row.names(m_year$BUGSoutput$summary)=="beta",2]; print(beta.sd)
+
+
+
+
+# #plot the posteriors for alpha and beta
+par(mfrow = c(2,1))
+hist(m_year$BUGSoutput$sims.matrix[,1], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", alpha, sep = "")))
+hist(m_year$BUGSoutput$sims.matrix[,2], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", beta, sep = "")))
+
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+
+data_long <- melt(data, id.vars = c("Year", "MAMTemp"))
+slope_temp <- as.numeric(m_year$BUGSoutput$mean[2])
+intercept_temp <- as.numeric(m_year$BUGSoutput$mean[1])
+
+slope_temp_5 <- as.numeric(m_year$BUGSoutput$summary[2,3])
+slope_temp_95 <- as.numeric(m_year$BUGSoutput$summary[2,7])
+
+
+intercept_temp_5 <- as.numeric(m_year$BUGSoutput$summary[1,3])
+intercept_temp_95 <- as.numeric(m_year$BUGSoutput$summary[1,7])
+
+
+ggplot(data_long, aes(x= Year, y = value))+
+  geom_point() +
+  geom_abline(mapping = aes(slope = slope_temp, intercept = intercept_temp)) +
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_5), linetype = "dashed") + 
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_95), linetype = "dashed")
+
+
+```
+**Ex: 02**
+
+We are now going to collapse the data into the early time period (<1950) and the late time period (≥1950). Year goes from a continuous variable to a discrete (0/1) variable, and the coefficient takes a different interpretation (the difference between flowering times early and late).  Is there a statistically significant shift between the early and late periods? Copy and paste code, summary of parameters, and relevant plots.
+
+Note that this is basically a t-test. Compare your results/interpretation to that obtained using the R function t.test. Interpret in the context of alpha and alpha + beta, interpret posterior of beta, is the posterior very different from zero? T.test gives effect size, but the role of the p-value is played by the location of the posterior, if the posterior is shifted from zero, then you have an effect. 
+
+
+```{r}
+
+#Run a T.test
+data_years <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+
+
+data_years$Year[data_years$Year < 1950] <- 0
+data_years$Year[data_years$Year > 1950] <- 1
+
+year <- data_years$Year
+year <- rep(as.numeric(year),times = 32)
+
+y <- unlist(c(data_years[,3:ncol(data_years)])) #
+t.test(y~year)
+```
+
+
+```{r}
+
+library(reshape2)
+
+data_years <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+
+data_years$Year[data_years$Year < 1950] <- 0
+data_years$Year[data_years$Year > 1950] <- 1
+data_years$Year <- factor(data_years$Year)
+
+#Coerce the dataframe into LONG format
+data_years.long <- melt(data_years, id.vars=c("Year", "MAMTemp"))
+
+#run the t.test (result should be CI of 5.39 to 9.75)
+t.test(data_years.long$value ~ data_years.long$Year)
+
+
+# ggplot(data_years.long, aes(x=data_years.long$MAMTemp , y= data_years.long$value))+
+#   geom_point() +
+#   geom_abline(mapping=aes(slope= slope_temp, intercept=  intercept_temp))
+
+
+ fileForJAGS <- "Week7_JAGS_Ex2_years.jags"
+cat("
+  model {
+for (i in 1:30)
+{
+    mu[i]<- alpha + beta * year[i]
+  
+for(j in 3:34)
+  {
+    y[i,j] ~ dnorm(mu[i], tau)
+  }
+
+}
+    alpha ~ dnorm(0,0.001)
+    beta ~ dnorm(0,0.001)
+    
+    tau <- pow(sigma,-2)
+    sigma ~ dgamma(0.001,0.001)
+
+    }",fill = TRUE, file= fileForJAGS) 
+    
+
+#Data as list for JAGS
+Dat <- list(y = as.matrix(data_years), year = data_years[,1])
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = rnorm(1,0,1), beta = rnorm(1,0,1), sigma = rgamma(1,2,0.01))} 
+
+#Parameters we want to track
+ParsStage <- c("alpha","beta","sigma")
+
+#Variables for MCMC
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+#JAGS model
+m_years.factors = jags(inits=InitStage,
+            n.chains=nc,
+            model.file="Week7_JAGS_Ex2_years.jags",
+            working.directory=getwd(),
+            data=Dat,
+            parameters.to.save=ParsStage,
+            n.thin=nt,
+            n.iter=ni,
+            n.burnin=nb,
+            DIC=T)
+
+m_years.factors$BUGSoutput
+
+#Summarize the model 
+MCMCsummary(m_years.factors, round = 2)
+
+#Summarize Alpha
+MCMCsummary(m_years.factors, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(m_years.factors, 
+            params = 'beta')
+
+
+#Check posteriors for convergence
+MCMCtrace(m_years.factors, params = c('alpha', 'beta', 'sigma'), ISB = FALSE, pdf = FALSE )
+
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(m_years.factors, 
+         params = 'alpha', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(m_years.factors, 
+         params = 'beta', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+
+#Extract means and mediauns
+alpha.mean<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="alpha",1]; print(alpha.mean)
+alpha.median<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="alpha",5]; print(alpha.median)
+
+beta.mean<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="beta",1]; print(beta.mean)
+beta.median<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="beta",5]; print(beta.median)
+
+alpha.sd<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="alpha",2]; print(alpha.sd)
+beta.sd<-m_years.factors$BUGSoutput$summary[row.names(m_years.factors$BUGSoutput$summary)=="beta",2]; print(beta.sd)
+
+
+
+# #plot the posteriors for alpha and beta
+par(mfrow = c(2,1))
+hist(m_years.factors$BUGSoutput$sims.matrix[,1], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", alpha, sep = "")))
+hist(m_years.factors$BUGSoutput$sims.matrix[,2], breaks = 20, main = NULL, xlab = expression(paste("Posterior Distribution of ", beta, sep = "")))
+
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+data_long <- melt(data, id.vars = c("Year", "MAMTemp"))
+slope_temp <- as.numeric(m_years.factors$BUGSoutput$mean[2])
+intercept_temp <- as.numeric(m_years.factors$BUGSoutput$mean[1])
+
+slope_temp_5 <- as.numeric(m_years.factors$BUGSoutput$summary[2,3])
+slope_temp_95 <- as.numeric(m_years.factors$BUGSoutput$summary[2,7])
+
+
+intercept_temp_5 <- as.numeric(m_years.factors$BUGSoutput$summary[1,3])
+intercept_temp_95 <- as.numeric(m_years.factors$BUGSoutput$summary[1,7])
+
+
+ggplot(data_long, aes(x= Year, y = value))+
+  geom_point() +
+  geom_abline(mapping = aes(slope = slope_temp, intercept = intercept_temp)) +
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_5), linetype = "dashed") + 
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_95), linetype = "dashed")
+
+
+
+```
+
+
+**Exercise 3**
+
+Tweak the code from Part 1 to include a random effect for species in the α parameter 
+
+```{r}
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+data <- melt(data, id.vars=c("Year", "MAMTemp"))
+data$variable <- as.numeric(data$variable)
+#adapting code from mcarthy box 6.3 for random effects in alpha (intercept)
+fileForJAGS <- "Week7_JAGS_year_Ex03.jags"
+cat("
+  model {
+  
+#deviation from global alpha for each species
+for (i in 1:32){
+alpha[i] ~ dnorm(0,tau_among)
+}
+
+
+for (i in 1:960){
+ mu[i] <- alpha[species[i]] + beta * year[i]
+ y[i] ~dnorm(mu[i], tau_within)
+}
+
+
+beta ~ dnorm(0,0.001)
+
+
+#Priors for sd and tau among species
+tau_among <- pow(sd_among, -2) 
+sd_among ~dunif(0,100)
+
+
+#Priors for sd and tau within species
+tau_within <- pow(sd_within, -2)
+sd_within ~ dunif(0,100)
+}",fill = TRUE, file= fileForJAGS) 
+#Data as list for JAGS
+
+Dat <- list(y = data$value, 
+            species = data$variable, 
+            year = data$Year)
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = rnorm(32,0,1), 
+                              beta = rnorm(1,0,1),
+                              sd_among = runif(1,0,100), 
+                              sd_within = runif(1,0,100))} 
+
+#Parameters we want to track
+ParsStage <- c("alpha", "beta", "sd_among", "sd_within")
+
+#Variables for MCMC
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+#JAGS model
+
+MCMC_Year_Ex4 = jags(inits=InitStage,
+                    n.chains=nc,
+                    model.file="Week7_JAGS_year_Ex03.jags",
+                    working.directory=getwd(),
+                    data=Dat,
+                    parameters.to.save=ParsStage,
+                    n.thin=nt,
+                    n.iter=ni,
+                    n.burnin=nb,
+                    DIC=T)
+
+
+
+
+#Summarize the model 
+MCMCsummary(MCMC_Year_Ex4, round = 2)
+
+#Summarize Alpha
+MCMCsummary(MCMC_Year_Ex4, 
+            params = 'alpha')
+
+
+
+#Check posteriors for convergence
+MCMCtrace(MCMC_Year_Ex4, params = c('alpha', 'sd_among', 'sd_within'), ISB = FALSE, pdf = FALSE )
+
+
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(MCMC_Year_Ex4, 
+         params = 'alpha', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(MCMC_Year_Ex4, 
+         params = 'sd_among', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+#Plot posterior medians, 50%, and 95% credible intervals 
+par(mfrow=c(1,1))
+MCMCplot(MCMC_Year_Ex4, 
+         params = 'sd_within', 
+         rank = TRUE,
+         xlab = 'ESTIMATE',
+         guide_lines = TRUE)
+
+
+
+
+
+
+
+
+
+data <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/07/data/plants.csv", header = TRUE)
+data[,1]<- (data[,1] - mean(data[,1]))/sd(data[,1]) #standardizing year
+data_long <- melt(data, id.vars = c("Year", "MAMTemp"))
+slope_temp <- as.numeric(m_years.factors$BUGSoutput$mean[2])
+intercept_temp <- as.numeric(m_years.factors$BUGSoutput$mean[1])
+
+slope_temp_5 <- as.numeric(m_years.factors$BUGSoutput$summary[2,3])
+slope_temp_95 <- as.numeric(m_years.factors$BUGSoutput$summary[2,7])
+
+
+intercept_temp_5 <- as.numeric(m_years.factors$BUGSoutput$summary[1,3])
+intercept_temp_95 <- as.numeric(m_years.factors$BUGSoutput$summary[1,7])
+
+
+ggplot(data_long, aes(x= Year, y = value))+
+  geom_point() +
+  geom_abline(mapping = aes(slope = slope_temp, intercept = intercept_temp)) +
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_5), linetype = "dashed") + 
+  geom_abline(mapping = aes(slope = slope_temp_5, intercept = intercept_temp_95), linetype = "dashed")
+
+```
+
