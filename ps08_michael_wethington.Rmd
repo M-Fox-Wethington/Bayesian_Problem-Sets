@@ -1,0 +1,479 @@
+---
+title: "PS08"
+author: "Michael Wethington"
+date: "10/12/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(MCMCvis)
+library(R2jags)
+library(abind)
+library(boot)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+
+
+jags.directory = "C:/Program Files/JAGS"
+setwd("C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data")
+```
+
+
+
+```{r}
+df <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data/birds.csv", header = TRUE)
+# dim(df)
+
+
+df$Year <- df$Year - 1990 #center the year variable
+df$Northern.Bobwhite <- df$Northern.Bobwhite 
+```
+
+
+**Exercise 1**
+We are going to do a traditional Poisson regression to look at the change in abundance of the Northern Bobwhite:
+*suggests subtracting off some middle values (like 1990). 
+
+
+```{r}
+#Model for MULTIPLE species
+ fileForJAGS <- "W8_JAGS_Ex1.jags"
+cat("
+  model {
+  
+  for (i in 1:48){
+  
+    Count[i] ~ dpois(lambda[i])
+    #lambda[i] <- exp(alpha + beta*Year[i]) 
+    log(lambda[i]) <- alpha + beta*Year[i]
+  }
+  
+  alpha ~ dunif(-10, 10)
+  beta ~ dunif(-10, 10)
+
+    }",fill = TRUE, file= fileForJAGS) 
+    
+
+
+#Data as list for JAGS
+Dat <- list(Count = df$Northern.Bobwhite, 
+            Year = df$Year)
+
+#Function for initial parameter values
+InitStage <- function() {list(alpha = 1, beta = 1)}
+
+# InitStage <- list(list(alpha=0 , beta = 0),
+#                   list(alpha = 50, beta=50),
+#                   list(alpha = -50, beta=-50))
+
+#Parameters we want to track
+ParsStage <- c("alpha","beta")
+
+#Variables for MCMC
+ni <- 10000  # number of draws from the posterior
+nt <- 1    #thinning rate
+nb <- 1000  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+
+#JAGS model
+model = jags(inits=InitStage,
+            n.chains=nc,
+            model.file="W8_JAGS_Ex1.jags",
+            working.directory=getwd(),
+            data=Dat,
+            parameters.to.save=ParsStage,
+            n.thin=nt,
+            n.iter=ni,
+            n.burnin=nb,
+            DIC=T)
+
+```
+
+
+Lets plot some summary data
+```{r}
+#Summarize the model (we want Rhat to be as close as possible to 1)
+MCMCsummary(model, round = 2) 
+
+#Summarize Alpha
+MCMCsummary(model, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(model, 
+            params = 'beta')
+
+#Check posteriors for convergence
+MCMCtrace(mcmc_temp, params = c('alpha', 'beta'), ISB = FALSE, pdf = FALSE )
+```
+
+
+
+**Exercise 2**
+
+In the same spirit of last week’s problem set, we will now model a larger number of species. Since the entire dataset might take some time to fit, let’s go with all the species up to and including the Northern Bobwhite (so the first 17 columns). We will, for the time being, assume completely independent parameters for each species.
+
+
+Plot the data and a sample of the results (enough to convince yourself the code works). Question: What is the difference between this and doing 17 different regressions?
+
+
+```{r}
+
+#set up the dataframe for Exercise 2
+BBS_NY <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data/birds.csv", header = TRUE)
+
+# re-load 
+BBS_NY$Year<-BBS_NY$Year-1990
+BBS <- as.data.frame(BBS_NY[,1:19])
+# take out route count
+BBS <- BBS[,-2]
+# long data set
+names<-colnames(BBS[,2:18])
+count_by_species<-pivot_longer(BBS,cols=names,names_to="species", values_to="count")
+```
+
+```{r}
+
+exercise2<-"Week8_exercise2.jags"
+cat("
+model {
+  for (i in 1:48){
+    for (j in 1:17){
+      log(lambda[i,j])<- alpha[j]+beta[j]*x[i]
+      y[i,j] ~ dpois(lambda[i,j])
+    }
+  }
+for (j in 1:17){
+	alpha[j] ~ dunif(0,200)
+	beta[j] ~ dnorm(0,.001)
+}
+}",fill = TRUE, file=exercise2)
+
+
+Dat <- list(
+  y=BBS[,2:18],
+  x=BBS$Year
+)
+
+
+# need initial value for every alpha - column vector of alphas
+InitStage <- list(list(alpha=rep(0,17),beta=rep(-10,17)),
+                  list(alpha=rep(100,17),beta=rep(0,17)), 
+                  list(alpha=rep(200,0),beta=rep(10,0)))
+
+
+ParsStage <- c("alpha","beta","lambda")
+ni <- 1100  # number of draws from the posterior
+nt <- 1    # thinning rate
+nb <- 100  # number to discard for burn-in
+nc <- 3  # number of chains
+exercise2_results = jags(inits=InitStage,
+         n.chains=nc,
+         model.file=exercise2,
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+
+
+```
+
+
+
+
+
+
+**Exercise 3**
+
+We will now do a hybrid between the first two approaches, by modeling the species-specific slopes as being drawn from a distribution. This is a classic hierarchical Bayesian problem.
+
+Gelman and Hill’s description of such models is quite good. What we have done in going from the second model and the third is reduce the number of parameters from 34 (17 for α and 17 for β) to 19 (17 for α and 2 for β
+
+).
+
+Plot the data and a sample of the results (enough to convince yourself the code works).
+
+
+
+```{r}
+#set up the dataframe for Exercise 2
+BBS_NY <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data/birds.csv", header = TRUE)
+
+# re-load 
+BBS_NY$Year<-BBS_NY$Year-1990
+BBS <- as.data.frame(BBS_NY[,1:19])
+# take out route count
+BBS <- BBS[,-2]
+# long data set
+names<-colnames(BBS[,2:18])
+count_by_species<-pivot_longer(BBS,cols=names,names_to="species", values_to="count")
+
+```
+
+```{r}
+
+exercise3<-"Week8_exercise3.jags"
+cat("
+model {
+  for (i in 1:48){
+    for (j in 1:17){
+      log(lambda[i,j])<- alpha[j]+beta[j]*x[i]
+      y[i,j] ~ dpois(lambda[i,j])
+    }
+  }
+  
+  
+for (j in 1:17){
+	alpha[j] ~ dunif(0,200)
+	beta[j] ~ dnorm(mu_beta, tau_beta)
+}
+
+
+mu_beta ~dnorm(0, 0.001)
+tau_beta ~ dgamma(0.001, 0.001)
+
+
+}",fill = TRUE, file=exercise3)
+
+
+#Specify you data 
+Dat <- list(
+  y=BBS[,2:18],
+  x=BBS$Year
+)
+
+
+# need initial value for every alpha - column vector of alphas
+#add for mu_beta and tau_beta (we're running out but she recommends specifying)
+#heather uses funtions 
+InitStage <- list(list(alpha=rep(0,17),beta=rep(-10,17)),
+                  list(alpha=rep(100,17),beta=rep(0,17)), 
+                  list(alpha=rep(200,0),beta=rep(10,0)))
+
+
+ParsStage <- c("alpha","beta","lambda", "mu_beta", 'tau_beta')
+ni <- 1100  # number of draws from the posterior
+nt <- 1    # thinning rate
+nb <- 100  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+exercise3_results = jags(inits=InitStage,
+         n.chains=nc,
+         model.file=exercise3,
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+```
+
+```{r}
+#Summarize the model (we want Rhat to be as close as possible to 1)
+MCMCsummary(exercise3_results, params = c("mu_beta", "tau_beta")) 
+MCMCsummary(exercise3_results) 
+#Summarize Alpha
+MCMCsummary(exercise3_results, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(model, 
+            params = 'beta')
+
+#Check posteriors for convergence
+MCMCtrace(mcmc_temp, params = c('alpha', 'beta'), ISB = FALSE, pdf = FALSE )
+```
+
+
+
+**Exercise 4**
+
+ So far we have been ignoring variation in effort across years. One way of accounting for this is to use an offset, as described in Kery Section 14.3. Using the number of Routes instead of Area (see Kery page 190), include log(Route.Count) as a covariate to your hierarchical model from Exercise #3. How are the coefficients to be interpreted when including this new term? Does including effort as a covariate change the biological interpretation of your results?
+ 
+ 
+ 
+```{r}
+#set up the dataframe for Exercise 3
+BBS_NY <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data/birds.csv", header = TRUE)
+
+# re-load 
+BBS_NY$Year<-BBS_NY$Year-1990
+BBS4 <- as.data.frame(BBS_NY[,1:19])
+
+
+```
+ 
+ 
+ 
+```{r}
+exercise4<-"Week8_exercise4.jags"
+cat("
+model {
+  for (i in 1:48){ #years
+    for (j in 1:17){ #species
+      log(lambda[i,j])<- log(a[i])+alpha[j]+beta[j]*x[i] #adding the offset to account for search effor - this rescales you effort so summary output might look like 0
+      y[i,j] ~ dpois(lambda[i,j])
+    }
+  }
+  
+  
+for (j in 1:17){
+	alpha[j] ~ dunif(0,200)
+	beta[j] ~ dnorm(mu_beta, tau_beta)
+}
+
+
+mu_beta ~ dnorm(0, 0.001)
+tau_beta ~ dgamma(0.001, 0.001)
+
+
+}",fill = TRUE, file=exercise4)
+
+
+#Specify you data 
+Dat <- list(
+  y=BBS4[,2:18],
+  x=BBS4$Year,
+  a = BBS4$Route.Count # is a data so we dont need priors
+)
+
+
+# need initial value for every alpha - column vector of alphas
+#add for mu_beta and tau_beta (we're running out but she recommends specifying)
+#heather uses funtions 
+InitStage <- list(list(alpha=rep(0,17),beta=rep(-10,17)), #issue might be starting values
+                  list(alpha=rep(100,17),beta=rep(0,17)), 
+                  list(alpha=rep(200,0),beta=rep(10,0)))
+
+
+ParsStage <- c("alpha","beta","lambda", "mu_beta", 'tau_beta')
+ni <- 1100  # number of draws from the posterior
+nt <- 1    # thinning rate
+nb <- 100  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+exercise4_results = jags(inits=InitStage,
+         n.chains=nc,
+         model.file=exercise4,
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+```
+ 
+```{r}
+#Summarize the model (we want Rhat to be as close as possible to 1)
+MCMCsummary(exercise4_results, params = c("mu_beta", "tau_beta"))  #low alpha and betas are due to rarity (the common species are taking up a lot of bandwidth)
+MCMCsummary(exercise4_results) 
+
+
+#Summarize Alpha
+MCMCsummary(exercise4_results, 
+            params = 'alpha')
+
+#Summarize Beta
+mc.beta <- MCMCsummary(exercise4_results, 
+            params = 'beta')
+
+#Check posteriors for convergence
+MCMCtrace(exercise4_results, params = c('alpha', 'beta'), ISB = FALSE, pdf = FALSE )
+```
+ 
+ **Exercis 5**
+ Lets look at exotic extreme value distributions to fit the model 
+ try Gumbel distribution
+ 
+```{r}
+#set up the dataframe for Exercise 2
+BBS_NY <- read.csv(file = "C:/Users/wmichael/Google Drive/BEE569/problem_sets/08/data/birds.csv", header = TRUE)
+
+BBS5 <- as.data.frame(BBS_NY)
+
+BBS5 <- BBS5[35,1]
+sum(BBS5[1,3:ncol(BBS5)])
+
+```
+ 
+ 
+```{r}
+exercise5<-"Week8_exercise5.jags"
+cat("
+model {
+  for (i in 1:48){ #years
+    for (j in 1:17){ #species
+      log(lambda[i,j])<- log(a[i])+alpha[j]+beta[j]*x[i] #adding the offset to account for search effort 
+      y[i,j] ~ dpois(lambda[i,j])
+    }
+  }
+  
+  
+for (j in 1:17){
+	alpha[j] ~ dunif(0,200)
+	beta[j] ~ dnorm(mu_beta, tau_beta)
+}
+
+
+mu_beta ~ dnorm(0, 0.001)
+tau_beta ~ dgamma(0.001, 0.001)
+
+
+}",fill = TRUE, file=exercise4)
+
+
+#Specify you data 
+Dat <- list(
+  y=BBS5[,2:18],
+  x=BBS5$Year,
+  a = BBS5$Route.Count # is a data so we dont need priors
+)
+
+
+# need initial value for every alpha - column vector of alphas
+#add for mu_beta and tau_beta (we're running out but she recommends specifying)
+#heather uses funtions 
+InitStage <- list(list(alpha=rep(0,17),beta=rep(-10,17)), #issue might be starting values
+                  list(alpha=rep(100,17),beta=rep(0,17)), 
+                  list(alpha=rep(200,0),beta=rep(10,0)))
+
+
+ParsStage <- c("alpha","beta","lambda", "mu_beta", 'tau_beta')
+ni <- 1100  # number of draws from the posterior
+nt <- 1    # thinning rate
+nb <- 100  # number to discard for burn-in
+nc <- 3  # number of chains
+
+
+exercise5_results = jags(inits=InitStage,
+         n.chains=nc,
+         model.file=exercise5,
+         working.directory=getwd(),
+         data=Dat,
+         parameters.to.save=ParsStage,
+         n.thin=nt,
+         n.iter=ni,
+         n.burnin=nb,
+         DIC=T)
+
+```
+ 
+ 
